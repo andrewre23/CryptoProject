@@ -25,7 +25,8 @@ class BaseLayer(Layer):
 
 
 class BaseLayerMulti(Layer):
-    """Base template for custom Keras layer with multi input and output"""
+    """Base template for custom Keras layer with multi input and output
+        -assume inputs are now lists"""
 
     def __init__(self, output_dim, **kwargs):
         self.output_dim = output_dim
