@@ -8,8 +8,8 @@ import pandas as pd
 import sklearn as sk
 
 from keras import regularizers
-from keras.models import Sequential
-from keras.layers import LSTM, Dense, Dropout
+from keras.models import Model
+from keras.layers import Input, LSTM, Dense, Dropout
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.metrics import mean_squared_error, \
@@ -18,7 +18,7 @@ from sklearn.metrics import mean_squared_error, \
 # custom Fuzzy Layers
 from notebooks.modeling.keras.layers import FuzzyLayer, DefuzzyLayer
 
-class SOFNN(Sequential):
+class SOFNN(Model):
     """
     Class for building Self-Organizing Fuzzy Neural Networks
 
@@ -26,7 +26,7 @@ class SOFNN(Sequential):
     """
 
     def __init__(self, **kwargs):
-        # initialize as Sequential object
+        # initialize as Model object
         super().__init__()
 
         # initialize variables needed for processing
