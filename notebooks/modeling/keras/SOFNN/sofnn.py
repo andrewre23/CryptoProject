@@ -18,11 +18,38 @@ from sklearn.metrics import mean_squared_error, \
 # custom Fuzzy Layers
 from notebooks.modeling.keras.layers import FuzzyLayer, DefuzzyLayer
 
+
 class SOFNN(Model):
     """
     Class for building Self-Organizing Fuzzy Neural Networks
 
-    -to house functions that optimize neural network
+    -Composed of 5 layers with varying "fuzzy rule" nodes
+
+
+    Layers
+    ======
+    1 - Input Layer:
+            input dataset
+        - shape : (samples, n_features)
+    2 - Radial Basis Function Layer (Fuzzy Layer):
+            layer to hold fuzzy rules for complex system
+        - shape : (1, n_features) <- initially
+        - shape : (n_neurons, n_features)
+    3 - Normalized Layer:
+            normalize each output of previous layer as
+            relative amount from sum of all previous outputs
+        - shape : (n_neurons, 1)
+    4 - Weighted Layer
+            multiply bias vector (1+n_features,) by
+            parameter vector (1+n_features,) of parameters
+            from each fuzzy rule
+            multiply each product by output of each rule's
+            layer from normalized layer
+        - shape : (n_neurons, 1)
+    5 - Output Layer
+            summation of incoming signals from weighted layer
+        - shape : (1,)
+
     """
 
     def __init__(self, **kwargs):
