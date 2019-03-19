@@ -27,7 +27,7 @@ class SOFNN(Model):
 
     def __init__(self, **kwargs):
         # initialize as Model object
-        super().__init__()
+        super().__init__(**kwargs)
 
         # initialize variables needed for processing
         pass
