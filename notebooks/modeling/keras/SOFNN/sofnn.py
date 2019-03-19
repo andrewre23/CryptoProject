@@ -28,27 +28,31 @@ class SOFNN(Model):
 
     Layers
     ======
-    1 - Input Layer:
+    1 - Input Layer
             input dataset
-        - shape : (samples, n_features)
-    2 - Radial Basis Function Layer (Fuzzy Layer):
+        - input shape  : (*, features)
+    2 - Radial Basis Function Layer (Fuzzy Layer)
             layer to hold fuzzy rules for complex system
-        - shape : (1, n_features) <- initially
-        - shape : (n_neurons, n_features)
-    3 - Normalized Layer:
+        - input shape  : (*, features)
+        - output shape : (neurons, 1)
+    3 - Normalized Layer
             normalize each output of previous layer as
             relative amount from sum of all previous outputs
-        - shape : (n_neurons, 1)
+        - input shape  : (neurons, 1)
+        - output shape : (neurons, 1)
     4 - Weighted Layer
             multiply bias vector (1+n_features,) by
             parameter vector (1+n_features,) of parameters
             from each fuzzy rule
             multiply each product by output of each rule's
             layer from normalized layer
-        - shape : (n_neurons, 1)
+        - input shape  : (1+features, 1) <- A
+        - input shape  : (1+features, 1) <- B
+        - output shape : (neurons, 1)
     5 - Output Layer
             summation of incoming signals from weighted layer
-        - shape : (1,)
+        - input shape  : (neurons, 1)
+        - output shape : (1,)
 
     """
 
