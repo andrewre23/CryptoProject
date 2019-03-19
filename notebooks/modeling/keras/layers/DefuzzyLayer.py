@@ -1,5 +1,6 @@
-# code credit for FuzzyLayer
+# based off project at
 # https://github.com/kenoma/KerasFuzzy
+
 
 
 from keras import backend as K
