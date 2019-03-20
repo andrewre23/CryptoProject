@@ -1,3 +1,3 @@
 # importing SOFNN class for package
 
-from .sofnn import SOFNN
+from .SOFNN import SOFNN
