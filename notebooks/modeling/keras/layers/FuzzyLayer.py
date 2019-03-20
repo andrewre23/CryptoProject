@@ -26,6 +26,7 @@ class FuzzyLayer(Layer):
         phi(j) = exp{-sum[i=1,r;
                     [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]]}
     """
+
     def __init__(self,
                  output_dim,
                  initializer_centers=None,
@@ -42,11 +43,13 @@ class FuzzyLayer(Layer):
         self.input_dimensions = list(input_shape)[:-1:-1]
         self.c = self.add_weight(name='c',
                                  shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_centers if self.initializer_centers is not None else 'uniform',
+                                 initializer=
+                                 self.initializer_centers if self.initializer_centers is not None else 'uniform',
                                  trainable=True)
         self.a = self.add_weight(name='a',
                                  shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
+                                 initializer=
+                                 self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
                                  trainable=True)
         super(FuzzyLayer, self).build(input_shape)
 

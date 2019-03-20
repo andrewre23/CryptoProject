@@ -2,7 +2,6 @@
 # https://github.com/kenoma/KerasFuzzy
 
 
-
 from keras import backend as K
 from keras.engine.topology import Layer
 
@@ -23,7 +22,8 @@ class DefuzzyLayer(Layer):
         self.input_dimensions = list(input_shape)[:-1:-1]
         self.rules_outcome = self.add_weight(name='rules_outcome',
                                              shape=(input_shape[1], self.output_dim),
-                                             initializer=self.initializer_rules_outcome if self.initializer_rules_outcome is not None else 'uniform',
+                                             initializer=self.initializer_rules_outcome if
+                                             self.initializer_rules_outcome is not None else 'uniform',
                                              trainable=True)
 
         super(DefuzzyLayer, self).build(input_shape)
