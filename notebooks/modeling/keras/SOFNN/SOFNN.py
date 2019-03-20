@@ -16,7 +16,8 @@ from sklearn.metrics import mean_squared_error, \
                 confusion_matrix, classification_report
 
 # custom Fuzzy Layers
-from notebooks.modeling.keras.layers import FuzzyLayer, DefuzzyLayer
+from notebooks.modeling.keras.layers import \
+                    FuzzyLayer, NormalizedLayer, WeightedLayer
 
 
 class SOFNN(Model):
