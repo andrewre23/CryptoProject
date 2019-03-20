@@ -52,7 +52,7 @@ class WeightedLayer(Layer):
                                  shape=(input_shape[-1], self.output_dim),
                                  initializer=self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
                                  trainable=True)
-        super(FuzzyLayer, self).build(input_shape)
+        super(WeightedLayer, self).build(input_shape)
 
     def call(self, x):
 
