@@ -1,30 +1,22 @@
-# based off project at
-# https://github.com/kenoma/KerasFuzzy
+# implemented per description in
+# Leng, Prasad, McGinnity (2004)
 
 
 from keras import backend as K
 from keras.engine.topology import Layer
 
 
-class FuzzyLayer(Layer):
+class NormalizedLayer(Layer):
     """
-    Class for Fuzzy Layer (2) of SOFNN
+    Class for Normalized Layer (3) of SOFNN
 
-    -Radial (Ellipsoidal) Basis Function Layer
-    -each neuron represents "if-part" or premise
-    of a fuzzy rule
-    -output is product of Membership Functions (MF)
-    -each MF is Gaussian function:
-        mu(i,j) = exp{- [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]}
-        for i features and  j neurons
+    -number of neurons equal to previous layer
+    -output for normalized layer is:
 
-        mu(i,j)    = ith MF of jth neuron
-        c(i,j)     = center of ith MF of jth neuron
-        sigma(i,j) = width of ith MF of jth nueron
+        PHI(j) = phi(j) / sum[k=1, u; phi(k)]
+                for u neurons
 
-    -output for fuzzy layer is:
-        phi(j) = exp{-sum[i=1,r;
-                    [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]]}
+        phi(j) = output of Fuzzy Layer neuron j
     """
     def __init__(self,
                  output_dim,
@@ -48,7 +40,7 @@ class FuzzyLayer(Layer):
                                  shape=(input_shape[-1], self.output_dim),
                                  initializer=self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
                                  trainable=True)
-        super(FuzzyLayer, self).build(input_shape)
+        super(NormalizedLayer, self).build(input_shape)
 
     def call(self, x):
 

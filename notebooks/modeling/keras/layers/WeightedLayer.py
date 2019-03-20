@@ -1,30 +1,34 @@
-# based off project at
-# https://github.com/kenoma/KerasFuzzy
+# implemented per description in
+# Leng, Prasad, McGinnity (2004)
 
 
 from keras import backend as K
 from keras.engine.topology import Layer
 
 
-class FuzzyLayer(Layer):
+class WeightedLayer(Layer):
     """
-    Class for Fuzzy Layer (2) of SOFNN
+    Class for Weighted Layer (4) of SOFNN
 
-    -Radial (Ellipsoidal) Basis Function Layer
-    -each neuron represents "if-part" or premise
-    of a fuzzy rule
-    -output is product of Membership Functions (MF)
-    -each MF is Gaussian function:
-        mu(i,j) = exp{- [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]}
-        for i features and  j neurons
+    -yields the "consequence" of the jth
+        fuzzy rule of fuzzy model
+    -each neuron has two inputs:
+        -output of previous related neuron j
+        -weighted bias w2j
+    -with:
+        r      = number of original input features
 
-        mu(i,j)    = ith MF of jth neuron
-        c(i,j)     = center of ith MF of jth neuron
-        sigma(i,j) = width of ith MF of jth nueron
+        B      = [1, x1, x2, ... xr].T
+        Aj     = [aj0, aj1, ... ajr].T
+
+        w2j    = Aj * B =
+                 aj0 + aj1x1 + aj2x2 + ... ajrxr
+
+        PHI(j) = output of jth neuron from
+                normalized layer
 
     -output for fuzzy layer is:
-        phi(j) = exp{-sum[i=1,r;
-                    [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]]}
+        fj     = w2j PHI(j)
     """
     def __init__(self,
                  output_dim,
@@ -36,7 +40,7 @@ class FuzzyLayer(Layer):
         self.output_dim = output_dim
         self.initializer_centers = initializer_centers
         self.initializer_sigmas = initializer_sigmas
-        super(FuzzyLayer, self).__init__(**kwargs)
+        super(WeightedLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.input_dimensions = list(input_shape)[:-1:-1]
