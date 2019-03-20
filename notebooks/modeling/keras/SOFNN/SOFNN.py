@@ -1,23 +1,26 @@
 #
 # Class for Self-Organizing Fuzzy Neural Network
 #
+# Implemented per description in
+# An on-line algorithm for creating self-organizing
+# fuzzy neural networks
+# Leng, Prasad, McGinnity (2004)
+#
+#
+# Andrew Edmonds - 2019
+#
 
-import keras as k
 import numpy as np
 import pandas as pd
-import sklearn as sk
 
-from keras import regularizers
+from keras import backend as K
 from keras.models import Model
+from keras import regularizers
 from keras.layers import Input, LSTM, Dense, Dropout
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.feature_selection import SelectPercentile, chi2
-from sklearn.metrics import mean_squared_error, \
-                confusion_matrix, classification_report
 
 # custom Fuzzy Layers
 from notebooks.modeling.keras.layers import \
-                    FuzzyLayer, NormalizedLayer, WeightedLayer
+    FuzzyLayer, NormalizedLayer, WeightedLayer
 
 
 class SOFNN(Model):

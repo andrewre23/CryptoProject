@@ -1,5 +1,9 @@
-# implemented per description in
+#
+# Implemented per description in
 # Leng, Prasad, McGinnity (2004)
+#
+# Andrew Edmonds - 2019
+#
 
 
 from keras import backend as K
