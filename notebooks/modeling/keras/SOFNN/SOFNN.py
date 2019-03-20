@@ -25,8 +25,12 @@ from notebooks.modeling.keras.layers import \
 
 class SOFNN(Model):
     """
-    Class for building Self-Organizing Fuzzy Neural Networks
+    Class for building Self-Organizing Fuzzy Neural Network
+    =======================================================
 
+    -Implemented per description in:
+        "An on-line algorithm for creating self-organizing
+        fuzzy neural networks" - Leng, Prasad, McGinnity (2004)
     -Composed of 5 layers with varying "fuzzy rule" nodes
 
 
