@@ -34,27 +34,28 @@ class SOFNN(Model):
         - input shape  : (*, features)
     2 - Radial Basis Function Layer (Fuzzy Layer)
             layer to hold fuzzy rules for complex system
-        - input shape  : (*, features)
-        - output shape : (neurons, 1)
+        - input shape  : (*, features * neurons)
+        - output shape : (*, neurons)
     3 - Normalized Layer
             normalize each output of previous layer as
             relative amount from sum of all previous outputs
-        - input shape  : (neurons, 1)
-        - output shape : (neurons, 1)
+        - input shape  : (*, neurons)
+        - output shape : (*, neurons)
     4 - Weighted Layer
-            multiply bias vector (1+n_features,) by
+            multiply bias vector (1+n_features, neurons) by
             parameter vector (1+n_features,) of parameters
             from each fuzzy rule
             multiply each product by output of each rule's
             layer from normalized layer
-        - input shape  : (1+features, 1) <- A
+        - input shape  : (1+features, neurons) <- A
         - input shape  : (1+features, 1) <- B
-        - output shape : (neurons, 1)
+        - output shape : (*, neurons)
     5 - Output Layer
             summation of incoming signals from weighted layer
-        - input shape  : (neurons, 1)
-        - output shape : (1,)
+        - input shape  : (*, neurons)
+        - output shape : (*,)
 
+    * = samples
     """
 
     def __init__(self, **kwargs):
