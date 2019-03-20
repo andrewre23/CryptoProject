@@ -50,7 +50,7 @@ class SOFNN(Model):
             from each fuzzy rule
             multiply each product by output of each rule's
             layer from normalized layer
-        - input shape  : (1+features, neurons) <- A
+        - input shape  : (1+features, 1) <- Aj
         - input shape  : (1+features, 1) <- B
         - output shape : (*, neurons)
     5 - Output Layer

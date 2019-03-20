@@ -33,7 +33,7 @@ class NormalizedLayer(Layer):
         self.output_dim = output_dim
         self.initializer_centers = initializer_centers
         self.initializer_sigmas = initializer_sigmas
-        super(FuzzyLayer, self).__init__(**kwargs)
+        super(NormalizedLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.input_dimensions = list(input_shape)[:-1:-1]
