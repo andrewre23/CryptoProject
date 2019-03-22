@@ -8,6 +8,7 @@
 #
 #
 # Andrew Edmonds - 2019
+# github.com/andrewre23
 #
 
 import numpy as np
