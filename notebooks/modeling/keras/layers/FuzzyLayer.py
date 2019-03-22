@@ -26,7 +26,7 @@ class FuzzyLayer(Layer):
 
         mu(i,j)    = ith MF of jth neuron
         c(i,j)     = center of ith MF of jth neuron
-        sigma(i,j) = width of ith MF of jth nueron
+        sigma(i,j) = width of ith MF of jth neuron
 
     -output for fuzzy layer is:
         phi(j) = exp{-sum[i=1,r;
@@ -46,32 +46,75 @@ class FuzzyLayer(Layer):
         super(FuzzyLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.input_dimensions = list(input_shape)[:-1:-1]
+        """
+        Build objects for processing steps
+
+        Parameters
+        ==========
+        input_shape : tuple
+            - input shape of training data
+            - last index will be taken for sizing variables
+
+        Attributes
+        ==========
+        c : center
+            - c(i,j)
+            - center of ith membership function of jth neuron
+
+        s : sigma
+            - s(i,j)
+            - sigma of ith membership function of jth neuron
+        """
         self.c = self.add_weight(name='c',
                                  shape=(input_shape[-1], self.output_dim),
                                  initializer=
-                                 self.initializer_centers if self.initializer_centers is not None else 'uniform',
+                                 self.initializer_centers if self.initializer_centers is not None
+                                 else 'uniform',
                                  trainable=True)
-        self.a = self.add_weight(name='a',
+        self.s = self.add_weight(name='s',
                                  shape=(input_shape[-1], self.output_dim),
                                  initializer=
-                                 self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
+                                 self.initializer_sigmas if self.initializer_sigmas is not None
+                                 else 'ones',
                                  trainable=True)
         super(FuzzyLayer, self).build(input_shape)
 
     def call(self, x):
+        """
+        Build processing logic for input tensor
 
+        Parameters
+        ==========
+        x : tensor
+            - input tensor
+            - shape: (features,)
+
+        Attributes
+        ==========
+        aligned_x : tensor
+            - x(i,j)
+            - ith feature of jth neuron
+
+        aligned_c : tensor
+            - c(i,j)
+            - center of ith membership function of jth neuron
+
+        aligned_a : tensor
+            - c(i,j)
+            - center of ith membership function of jth neuron
+
+        Returns
+        =======
+        phi: tensor
+            - phi(neurons,)
+            - output of fuzzy layer
+        """
         aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)
         aligned_c = self.c
-        aligned_a = self.a
-        for dim in self.input_dimensions:
-            aligned_c = K.repeat_elements(K.expand_dims(aligned_c, 0), dim, 0)
-            aligned_a = K.repeat_elements(K.expand_dims(aligned_a, 0), dim, 0)
+        aligned_s = self.s
 
-        xc = K.exp(-K.sum(K.square((aligned_x - aligned_c) / (2 * aligned_a)), axis=-2, keepdims=False))
-        # sums = K.sum(xc,axis=-1,keepdims=True)
-        # less = K.ones_like(sums) * K.epsilon()
-        return xc  # xc / K.maximum(sums, less)
+        phi = K.exp(-K.sum(K.square((aligned_x - aligned_c) / (2 * aligned_s)), axis=-2, keepdims=False))
+        return phi
 
     def compute_output_shape(self, input_shape):
         return tuple(input_shape[:-1]) + (self.output_dim,)
