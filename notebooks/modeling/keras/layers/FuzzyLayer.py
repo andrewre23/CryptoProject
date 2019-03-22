@@ -15,21 +15,27 @@ from keras.engine.topology import Layer
 
 class FuzzyLayer(Layer):
     """
-    Class for Fuzzy Layer (2) of SOFNN
+    Fuzzy Layer (2) of SOFNN
+    ========================
 
-    -Radial (Ellipsoidal) Basis Function Layer
-    -each neuron represents "if-part" or premise
-    of a fuzzy rule
-    -output is product of Membership Functions (MF)
-    -each MF is Gaussian function:
-        mu(i,j) = exp{- [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]}
-        for i features and  j neurons
+    - Radial (Ellipsoidal) Basis Function Layer
 
-        mu(i,j)    = ith MF of jth neuron
-        c(i,j)     = center of ith MF of jth neuron
-        sigma(i,j) = width of ith MF of jth neuron
+    - each neuron represents "if-part" or premise of a fuzzy rule
+    - individual Membership Functions (MF) are applied to each feature for each neuron
+    - output is product of Membership Functions
+    - each MF is Gaussian function:
 
-    -output for fuzzy layer is:
+        - mu(i,j) = exp{- [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]}
+
+        - for i features and  j neurons:
+
+        - mu(i,j)    = ith MF of jth neuron
+
+        - c(i,j)     = center of ith MF of jth neuron
+
+        - sigma(i,j) = width of ith MF of jth neuron
+
+    - output for Fuzzy Layer is:
         phi(j) = exp{-sum[i=1,r;
                     [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]]}
     """
