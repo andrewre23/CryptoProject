@@ -81,7 +81,7 @@ class FuzzyLayer(Layer):
 
     def call(self, x):
         """
-        Build processing logic for input tensor
+        Build processing logic for layer
 
         Parameters
         ==========
