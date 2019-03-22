@@ -99,9 +99,9 @@ class FuzzyLayer(Layer):
             - c(i,j)
             - center of ith membership function of jth neuron
 
-        aligned_a : tensor
-            - c(i,j)
-            - center of ith membership function of jth neuron
+        aligned_s : tensor
+            - s(i,j)
+            - sigma of ith membership function of jth neuron
 
         Returns
         =======
@@ -113,7 +113,8 @@ class FuzzyLayer(Layer):
         aligned_c = self.c
         aligned_s = self.s
 
-        phi = K.exp(-K.sum(K.square((aligned_x - aligned_c) / (2 * aligned_s)), axis=-2, keepdims=False))
+        phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
+                           axis=-2, keepdims=False))
         return phi
 
     def compute_output_shape(self, input_shape):
