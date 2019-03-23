@@ -120,7 +120,7 @@ class FuzzyLayer(Layer):
         =======
         phi: tensor
             - phi(neurons,)
-            - output of fuzzy layer
+            - output of each neuron in fuzzy layer
         """
         aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)
         aligned_c = self.c
