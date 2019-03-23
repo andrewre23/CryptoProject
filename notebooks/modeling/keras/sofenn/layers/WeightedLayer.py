@@ -13,14 +13,16 @@ from keras.engine.topology import Layer
 
 class WeightedLayer(Layer):
     """
-    Class for Weighted Layer (4) of sofenn
+    Weighted Layer (4) of SOFNN
+    ===========================
 
-    -yields the "consequence" of the jth
-        fuzzy rule of fuzzy model
-    -each neuron has two inputs:
-        -output of previous related neuron j
-        -weighted bias w2j
-    -with:
+    - Weighting of ith MF of each feature
+
+    - yields the "consequence" of the jth fuzzy rule of fuzzy model
+    - each neuron has two inputs:
+        - output of previous related neuron j
+        - weighted bias w2j
+    - with:
         r      = number of original input features
 
         B      = [1, x1, x2, ... xr].T

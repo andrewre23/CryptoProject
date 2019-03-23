@@ -13,13 +13,18 @@ from keras.engine.topology import Layer
 
 class NormalizedLayer(Layer):
     """
-    Class for Normalized Layer (3) of sofenn
+    Normalized Layer (3) of SOFNN
+    =============================
 
-    -number of neurons equal to previous layer
-    -output for normalized layer is:
+    - Normalization Layer
+
+    - output of each neuron is normalized by total output from previous layer
+    - number of outputs equal to previous layer (# of neurons)
+    - output for Normalized Layer is:
 
         PHI(j) = phi(j) / sum[k=1, u; phi(k)]
                 for u neurons
+        - with:
 
         phi(j) = output of Fuzzy Layer neuron j
     """
