@@ -122,10 +122,16 @@ class FuzzyLayer(Layer):
             - phi(neurons,)
             - output of each neuron in fuzzy layer
         """
+        # create variables for processing
         aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)
         aligned_c = self.c
         aligned_s = self.s
 
+        # validate shapes
+        assert (aligned_x.shape == aligned_c.shape)
+        assert (aligned_x.shape == aligned_s.shape)
+
+        # calculate output of each neuron (fuzzy rule)
         phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
                            axis=-2, keepdims=False))
         return phi
