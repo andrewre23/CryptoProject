@@ -21,14 +21,14 @@ import pandas as pd
 from keras import backend as K
 from keras.models import Model
 from keras import regularizers
-from keras.layers import Input, LSTM, Dense, Dropout
+from keras.layers import Input, Dense
 
 # custom Fuzzy Layers
 from .layers import \
     FuzzyLayer, NormalizedLayer, WeightedLayer
 
 
-class SOFNN(Model):
+class SOFNN(object):
     """
     Class for building Self-Organizing Fuzzy Neural Network
     =======================================================
@@ -68,11 +68,11 @@ class SOFNN(Model):
         - output shape : (*,)
 
     * = samples
+
+    Functions
+    =========
+
     """
 
-    def __init__(self, **kwargs):
-        # initialize as Model object
-        super().__init__(**kwargs)
-
-        # initialize variables needed for processing
+    def __init__(self):
         pass
