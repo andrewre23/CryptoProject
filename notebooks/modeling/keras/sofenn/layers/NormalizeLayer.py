@@ -40,43 +40,46 @@ class NormalizedLayer(Layer):
 
     def __init__(self,
                  output_dim,
-                 initializer_centers=None,
-                 initializer_sigmas=None,
                  **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
         self.output_dim = output_dim
-        self.initializer_centers = initializer_centers
-        self.initializer_sigmas = initializer_sigmas
         super(NormalizedLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.input_dimensions = list(input_shape)[:-1:-1]
-        self.c = self.add_weight(name='c',
-                                 shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_centers if
-                                 self.initializer_centers is not None else 'uniform',
-                                 trainable=True)
-        self.a = self.add_weight(name='a',
-                                 shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_sigmas if
-                                 self.initializer_sigmas is not None else 'ones',
-                                 trainable=True)
+        """
+        Build objects for processing steps
+
+        Parameters
+        ==========
+        input_shape : tuple
+            - input shape of training data
+            - last index will be taken for sizing variables
+
+        """
         super(NormalizedLayer, self).build(input_shape)
 
     def call(self, x):
+        """
+        Build processing logic for layer
 
-        aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)
-        aligned_c = self.c
-        aligned_a = self.a
-        for dim in self.input_dimensions:
-            aligned_c = K.repeat_elements(K.expand_dims(aligned_c, 0), dim, 0)
-            aligned_a = K.repeat_elements(K.expand_dims(aligned_a, 0), dim, 0)
+        Parameters
+        ==========
+        x : tensor
+            - input tensor
+            - tensor with phi output of each neuron
+            - phi(j) for j neurons
+            - shape: (neurons,)
 
-        xc = K.exp(-K.sum(K.square((aligned_x - aligned_c) / (2 * aligned_a)), axis=-2, keepdims=False))
-        # sums = K.sum(xc,axis=-1,keepdims=True)
-        # less = K.ones_like(sums) * K.epsilon()
-        return xc  # xc / K.maximum(sums, less)
+        Returns
+        =======
+        phi_norm : tensor
+            - output of each neuron after normalization step
+            - divide each output by sum of output of all neurons
+            - phi_norm(j) for j neurons
+            - shape: (neurons,)
+        """
+        return x / K.sum(x)
 
     def compute_output_shape(self, input_shape):
         return tuple(input_shape[:-1]) + (self.output_dim,)
