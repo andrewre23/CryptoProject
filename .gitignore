@@ -121,7 +121,7 @@ data/graph_tools/
 data/submissions/Final_Submissions 3.0/
 data/submissions/Updated Submissions/
 notebooks/modeling/keras/.ipynb_checkpoints/
-sofenn/layers/__pycache__/
+notebooks/modeling/keras/sofenn/layers/__pycache__/
 /data/comments/
 /data/
 !/data/
