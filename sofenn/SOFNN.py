@@ -1,5 +1,6 @@
 #
-# Class for Self-Organizing Fuzzy Neural Network
+# SOFENN
+# Self-Organizing Fuzzy Neural Network
 #
 # Implemented per description in
 # An on-line algorithm for creating self-organizing
@@ -20,7 +21,7 @@ from keras import regularizers
 from keras.layers import Input, LSTM, Dense, Dropout
 
 # custom Fuzzy Layers
-from notebooks.modeling.keras.layers import \
+from .layers import \
     FuzzyLayer, NormalizedLayer, WeightedLayer
 
 
