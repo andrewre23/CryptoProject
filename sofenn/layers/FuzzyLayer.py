@@ -15,7 +15,7 @@ from keras.engine.topology import Layer
 
 class FuzzyLayer(Layer):
     """
-    Class for Fuzzy Layer (2) of SOFNN
+    Class for Fuzzy Layer (2) of sofenn
 
     -Radial (Ellipsoidal) Basis Function Layer
     -each neuron represents "if-part" or premise

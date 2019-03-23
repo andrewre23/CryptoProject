@@ -11,17 +11,29 @@ from keras import backend as K
 from keras.engine.topology import Layer
 
 
-class NormalizedLayer(Layer):
+class WeightedLayer(Layer):
     """
-    Class for Normalized Layer (3) of SOFNN
+    Class for Weighted Layer (4) of sofenn
 
-    -number of neurons equal to previous layer
-    -output for normalized layer is:
+    -yields the "consequence" of the jth
+        fuzzy rule of fuzzy model
+    -each neuron has two inputs:
+        -output of previous related neuron j
+        -weighted bias w2j
+    -with:
+        r      = number of original input features
 
-        PHI(j) = phi(j) / sum[k=1, u; phi(k)]
-                for u neurons
+        B      = [1, x1, x2, ... xr].T
+        Aj     = [aj0, aj1, ... ajr].T
 
-        phi(j) = output of Fuzzy Layer neuron j
+        w2j    = Aj * B =
+                 aj0 + aj1x1 + aj2x2 + ... ajrxr
+
+        PHI(j) = output of jth neuron from
+                normalized layer
+
+    -output for fuzzy layer is:
+        fj     = w2j PHI(j)
     """
 
     def __init__(self,
@@ -34,7 +46,7 @@ class NormalizedLayer(Layer):
         self.output_dim = output_dim
         self.initializer_centers = initializer_centers
         self.initializer_sigmas = initializer_sigmas
-        super(NormalizedLayer, self).__init__(**kwargs)
+        super(WeightedLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.input_dimensions = list(input_shape)[:-1:-1]
@@ -48,7 +60,7 @@ class NormalizedLayer(Layer):
                                  initializer=self.initializer_sigmas if
                                  self.initializer_sigmas is not None else 'ones',
                                  trainable=True)
-        super(NormalizedLayer, self).build(input_shape)
+        super(WeightedLayer, self).build(input_shape)
 
     def call(self, x):
 

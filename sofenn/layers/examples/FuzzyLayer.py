@@ -1,39 +1,36 @@
 #
+# Based off project at
+# https://github.com/kenoma/KerasFuzzy
+#
 # Implemented per description in
 # Leng, Prasad, McGinnity (2004)
 #
 # Andrew Edmonds - 2019
-# github.com/andrewre23
 #
-
 
 from keras import backend as K
 from keras.engine.topology import Layer
 
 
-class WeightedLayer(Layer):
+class FuzzyLayer(Layer):
     """
-    Class for Weighted Layer (4) of SOFNN
+    Class for Fuzzy Layer (2) of sofenn
 
-    -yields the "consequence" of the jth
-        fuzzy rule of fuzzy model
-    -each neuron has two inputs:
-        -output of previous related neuron j
-        -weighted bias w2j
-    -with:
-        r      = number of original input features
+    -Radial (Ellipsoidal) Basis Function Layer
+    -each neuron represents "if-part" or premise
+    of a fuzzy rule
+    -output is product of Membership Functions (MF)
+    -each MF is Gaussian function:
+        mu(i,j) = exp{- [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]}
+        for i features and  j neurons
 
-        B      = [1, x1, x2, ... xr].T
-        Aj     = [aj0, aj1, ... ajr].T
-
-        w2j    = Aj * B =
-                 aj0 + aj1x1 + aj2x2 + ... ajrxr
-
-        PHI(j) = output of jth neuron from
-                normalized layer
+        mu(i,j)    = ith MF of jth neuron
+        c(i,j)     = center of ith MF of jth neuron
+        sigma(i,j) = width of ith MF of jth nueron
 
     -output for fuzzy layer is:
-        fj     = w2j PHI(j)
+        phi(j) = exp{-sum[i=1,r;
+                    [x(i) - c(i,j)]^2 / [2 * sigma(i,j)^2]]}
     """
 
     def __init__(self,
@@ -46,21 +43,21 @@ class WeightedLayer(Layer):
         self.output_dim = output_dim
         self.initializer_centers = initializer_centers
         self.initializer_sigmas = initializer_sigmas
-        super(WeightedLayer, self).__init__(**kwargs)
+        super(FuzzyLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.input_dimensions = list(input_shape)[:-1:-1]
         self.c = self.add_weight(name='c',
                                  shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_centers if
-                                 self.initializer_centers is not None else 'uniform',
+                                 initializer=
+                                 self.initializer_centers if self.initializer_centers is not None else 'uniform',
                                  trainable=True)
         self.a = self.add_weight(name='a',
                                  shape=(input_shape[-1], self.output_dim),
-                                 initializer=self.initializer_sigmas if
-                                 self.initializer_sigmas is not None else 'ones',
+                                 initializer=
+                                 self.initializer_sigmas if self.initializer_sigmas is not None else 'ones',
                                  trainable=True)
-        super(WeightedLayer, self).build(input_shape)
+        super(FuzzyLayer, self).build(input_shape)
 
     def call(self, x):
 
