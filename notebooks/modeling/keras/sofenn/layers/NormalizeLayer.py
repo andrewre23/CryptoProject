@@ -76,7 +76,7 @@ class NormalizedLayer(Layer):
         phi_norm : tensor
             - output of each neuron after normalization step
             - divide each output by sum of output of all neurons
-            - phi_norm(j) for j neurons
+            - phi_norm(j) for jth neuron
             - shape: (neurons,)
         """
         return x / K.sum(x)

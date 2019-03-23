@@ -72,12 +72,12 @@ class FuzzyLayer(Layer):
         ==========
         c : center
             - c(i,j)
-            - center of ith membership function of jth neuron
+            - trainable weights for center of ith membership function of jth neuron
             - shape: (features, neurons)
 
         s : sigma
             - s(i,j)
-            - sigma of ith membership function of jth neuron
+            - trainable weights for sigma of ith membership function of jth neuron
             - shape: (features, neurons)
         """
         self.c = self.add_weight(name='c',
@@ -125,7 +125,7 @@ class FuzzyLayer(Layer):
         =======
         phi: tensor
             - phi(neurons,)
-            - output of each neuron in fuzzy layer
+            - output of jth neuron in fuzzy layer
             - shape: (neurons,)
         """
         # create variables for processing
