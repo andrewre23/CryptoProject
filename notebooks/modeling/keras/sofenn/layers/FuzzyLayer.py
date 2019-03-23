@@ -73,10 +73,12 @@ class FuzzyLayer(Layer):
         c : center
             - c(i,j)
             - center of ith membership function of jth neuron
+            - shape: (features, neurons)
 
         s : sigma
             - s(i,j)
             - sigma of ith membership function of jth neuron
+            - shape: (features, neurons)
         """
         self.c = self.add_weight(name='c',
                                  shape=(input_shape[-1], self.output_dim),
@@ -107,20 +109,24 @@ class FuzzyLayer(Layer):
         aligned_x : tensor
             - x(i,j)
             - ith feature of jth neuron
+            - shape: (features, neurons)
 
         aligned_c : tensor
             - c(i,j)
             - center of ith membership function of jth neuron
+            - shape: (features, neurons)
 
         aligned_s : tensor
             - s(i,j)
             - sigma of ith membership function of jth neuron
+            - shape: (features, neurons)
 
         Returns
         =======
         phi: tensor
             - phi(neurons,)
             - output of each neuron in fuzzy layer
+            - shape: (neurons,)
         """
         # create variables for processing
         aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)
@@ -137,4 +143,19 @@ class FuzzyLayer(Layer):
         return phi
 
     def compute_output_shape(self, input_shape):
+        """
+        Return output shape of input data
+
+        Parameters
+        ==========
+        input_shape : tuple
+            - shape of input data
+            - shape: (samples, features)
+
+        Returns
+        =======
+        output_shape : tensor
+            - output shape of layer
+            - shape: (samples, neurons)
+        """
         return tuple(input_shape[:-1]) + (self.output_dim,)
