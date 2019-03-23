@@ -119,4 +119,4 @@ class FuzzyLayer(Layer):
         return phi
 
     def compute_output_shape(self, input_shape):
-        return (self.output_dim,)
+        return tuple(input_shape[:-1]) + (self.output_dim,)
