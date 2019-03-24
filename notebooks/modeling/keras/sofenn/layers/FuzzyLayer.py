@@ -102,14 +102,14 @@ class FuzzyLayer(Layer):
         ==========
         x : tensor
             - input tensor
-            - shape: (features,)
+            - shape: (samples,features)
 
         Attributes
         ==========
         aligned_x : tensor
             - x(i,j)
             - ith feature of jth neuron
-            - shape: (features, neurons)
+            - shape: (samples, features, neurons)
 
         aligned_c : tensor
             - c(i,j)
@@ -126,7 +126,7 @@ class FuzzyLayer(Layer):
         phi: tensor
             - phi(neurons,)
             - output of jth neuron in fuzzy layer
-            - shape: (neurons,)
+            - shape: (samples, neurons)
         """
         # create variables for processing
         aligned_x = K.repeat_elements(K.expand_dims(x, axis=-1), self.output_dim, -1)

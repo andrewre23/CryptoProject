@@ -69,7 +69,7 @@ class NormalizedLayer(Layer):
             - input tensor
             - tensor with phi output of each neuron
             - phi(j) for j neurons
-            - shape: (neurons,)
+            - shape: (samples, neurons)
 
         Returns
         =======
@@ -77,7 +77,7 @@ class NormalizedLayer(Layer):
             - output of each neuron after normalization step
             - divide each output by sum of output of all neurons
             - phi_norm(j) for jth neuron
-            - shape: (neurons,)
+            - shape: (samples, neurons)
         """
         sums = K.sum(x, axis=-1)
         sums = K.repeat_elements(K.expand_dims(sums, axis=-1), self.output_dim, -1)
@@ -88,4 +88,19 @@ class NormalizedLayer(Layer):
         return x / sums
 
     def compute_output_shape(self, input_shape):
+        """
+        Return output shape of input data
+
+        Parameters
+        ==========
+        input_shape : tuple
+            - shape of input data
+            - shape: (samples, neurons)
+
+        Returns
+        =======
+        output_shape : tensor
+            - output shape of layer
+            - shape: (samples, neurons)
+        """
         return tuple(input_shape[:-1]) + (self.output_dim,)
