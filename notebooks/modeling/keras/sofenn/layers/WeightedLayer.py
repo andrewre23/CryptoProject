@@ -79,7 +79,7 @@ class WeightedLayer(Layer):
         assert isinstance(input_shape, list)
 
         self.a = self.add_weight(name='a',
-                                 shape=(self.output_dim, 1+input_shape[0][-1]),
+                                 shape=(1+input_shape[0][-1], self.output_dim),
                                  initializer=self.initializer_a if
                                  self.initializer_a is not None else 'uniform',
                                  trainable=True)
@@ -119,27 +119,17 @@ class WeightedLayer(Layer):
         assert isinstance(x, list)
         x, phi = x
 
-        print('Inputs')
-        print('x shape: {}'.format(x.shape))
-        print('phi shape: {}'.format(phi.shape))
-
         # align tensors by prepending bias value for input tensor in b
-        # b shape (samples, 1)
-        print('\nIntermediates')
-        # add column of 1's to input vector
+        # b shape: (samples, 1)
         b = K.ones((K.tf.shape(x)[0], 1), dtype=x.dtype)
         aligned_b = K.concatenate([b, x])
-        # transpose a weights
-        aligned_a = K.transpose(self.a)
-        print('al_b shape: {}'.format(aligned_b.shape))
-        print('al_a shape: {}'.format(aligned_a.shape))
+        aligned_a = self.a
+
         # assert input and weight vectors are compatible
+        # w2 shape: (samples, neurons)
         assert(aligned_b.shape[-1] == aligned_a.shape[0])
         w2 = K.tf.matmul(aligned_b, aligned_a)
 
-        print('\nOutput weight')
-        print('w2 shape: {}'.format(w2.shape))
-        print('phi shape: {}'.format(phi.shape))
         # assert phi and resulting w2 vector are compatible
         assert (phi.shape[-1] == w2.shape[-1])
 
