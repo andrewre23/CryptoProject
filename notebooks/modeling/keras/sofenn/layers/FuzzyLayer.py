@@ -155,7 +155,7 @@ class FuzzyLayer(Layer):
         Returns
         =======
         output_shape : tuple
-            - output shape of layer
+            - output shape of fuzzy layer
             - shape: (samples, neurons)
         """
         return tuple(input_shape[:-1]) + (self.output_dim,)
