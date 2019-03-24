@@ -134,8 +134,8 @@ class FuzzyLayer(Layer):
         aligned_s = self.s
 
         # validate shapes
-        assert (aligned_x.shape == aligned_c.shape)
-        assert (aligned_x.shape == aligned_s.shape)
+        assert (aligned_x.shape[-2:] == aligned_c.shape)
+        assert (aligned_x.shape[-2:] == aligned_s.shape)
 
         # calculate output of each neuron (fuzzy rule)
         phi = K.exp(-K.sum(K.square(aligned_x - aligned_c) / (2 * K.square(aligned_s)),
