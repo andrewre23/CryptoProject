@@ -65,19 +65,21 @@ class WeightedLayer(Layer):
         ==========
         input_shape : list of tuples
             - [x shape, phi shape]
-            - x shape: (features,)
-            - phi shape: (neurons,)
+            - x shape: (samples, features)
+            - phi shape: (samples, neurons)
 
         Attributes
         ==========
         a : then-part (consequence) of fuzzy rule
             - a(i,j)
             - trainable weight of ith feature of jth neuron
-            - shape: (1+features, neurons)
+            - shape: (samples, 1+features, neurons)
         """
+        # assert multi-input as list
         assert isinstance(input_shape, list)
+
         self.a = self.add_weight(name='a',
-                                 shape=(1 + input_shape[0][-1], self.output_dim),
+                                 shape=(self.output_dim, 1+input_shape[0][-1]),
                                  initializer=self.initializer_a if
                                  self.initializer_a is not None else 'uniform',
                                  trainable=True)
@@ -92,8 +94,8 @@ class WeightedLayer(Layer):
         x : list of tensors
             - list of tensor with input data and phi output of previous layer
             - [x, phi]
-            - x shape: (features,)
-            - phi shape: (neurons,)
+            - x shape: (samples, features)
+            - phi shape: (samples, neurons)
 
         Attributes
         ==========
@@ -118,14 +120,31 @@ class WeightedLayer(Layer):
             - output of each neuron in fuzzy layer
             - shape: (neurons,)
         """
+        # assert multi-input as list and read in inputs
         assert isinstance(x, list)
         x, phi = x
 
-        # align tensors by prepending bias value for input tensor in b
-        aligned_b = K.concatenate([K.tf.convert_to_tensor([1], dtype=x.dtype), x])
-        aligned_a = K.transpose(self.a)
+        print('Inputs')
+        print('x shape: {}'.format(x.shape))
+        print('phi shape: {}'.format(phi.shape))
 
-        return phi * K.sum(aligned_a * aligned_b, axis=-1)
+        # align tensors by prepending bias value for input tensor in b
+        # b shape (samples, 1)
+        print('\nIntermediates')
+        b = K.ones((K.tf.shape(x)[0], 1), dtype=x.dtype)
+        aligned_b = K.concatenate([b, x])
+        aligned_a = self.a
+        print('b shape: {}'.format(b.shape))
+        print('al_a shape: {}'.format(aligned_a.shape))
+        print('al_a.T shape: {}'.format(K.transpose(aligned_a).shape))
+        print('al_b shape: {}'.format(aligned_b.shape))
+        print('al_b.T shape: {}'.format(K.transpose(aligned_b).shape))
+        w2 = K.tf.matmul(aligned_b, K.transpose(aligned_a))
+        print('\nOutput weight')
+        print('w2 shape: {}'.format(w2.shape))
+        print('phi shape: {}'.format(phi.shape))
+
+        return phi * w2
 
     def compute_output_shape(self, input_shape):
         """
@@ -133,16 +152,19 @@ class WeightedLayer(Layer):
 
         Parameters
         ==========
-        input_shape : tuple
-            - shape of input data
-            - shape: (samples, features)
+        input_shape : list of tuples
+            - [x, phi]
+            - x shape: (samples, features)
+            - phi shape: (samples, neurons)
 
         Returns
         =======
-        output_shape : tensor
-            - output shape of layer
+        output_shape : tuple
+            - output shape of weighted layer
             - shape: (samples, neurons)
         """
+        # assert multi-input as list
         assert isinstance(input_shape, list)
         x_shape, phi_shape = input_shape
+
         return tuple(x_shape[:-1]) + (self.output_dim,)
