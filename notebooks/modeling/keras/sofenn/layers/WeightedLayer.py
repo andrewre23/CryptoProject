@@ -55,7 +55,7 @@ class WeightedLayer(Layer):
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
         self.output_dim = output_dim
         self.initializer_a = initializer_a
-        super(WeightedLayer, self).__init__(**kwargs)
+        super(WeightedLayer, self).__init__(name='Weights', **kwargs)
 
     def build(self, input_shape):
         """
@@ -101,17 +101,12 @@ class WeightedLayer(Layer):
         ==========
         aligned_b : tensor
             - input vector with [1.0] prepended for bias weight
-            - shape: (1+features,)
+            - shape: (samples, 1+features)
 
-        aligned_c : tensor
-            - c(i,j)
-            - center of ith membership function of jth neuron
-            - shape: (features, neurons)
-
-        aligned_s : tensor
-            - s(i,j)
-            - sigma of ith membership function of jth neuron
-            - shape: (features, neurons)
+        aligned_a : tensor
+            - a(i,j)
+            - weight parameter of ith feature of jth neuron
+            - shape: (1+features, neurons)
 
         Returns
         =======
@@ -131,16 +126,22 @@ class WeightedLayer(Layer):
         # align tensors by prepending bias value for input tensor in b
         # b shape (samples, 1)
         print('\nIntermediates')
+        # add column of 1's to input vector
         b = K.ones((K.tf.shape(x)[0], 1), dtype=x.dtype)
         aligned_b = K.concatenate([b, x])
-        aligned_a = self.a
+        # transpose a weights
+        aligned_a = K.transpose(self.a)
         print('al_b shape: {}'.format(aligned_b.shape))
-        print('al_a.T shape: {}'.format(K.transpose(aligned_a).shape))
-        w2 = K.tf.matmul(aligned_b, K.transpose(aligned_a))
+        print('al_a shape: {}'.format(aligned_a.shape))
+        # assert input and weight vectors are compatible
+        assert(aligned_b.shape[-1] == aligned_a.shape[0])
+        w2 = K.tf.matmul(aligned_b, aligned_a)
 
         print('\nOutput weight')
         print('w2 shape: {}'.format(w2.shape))
         print('phi shape: {}'.format(phi.shape))
+        # assert phi and resulting w2 vector are compatible
+        assert (phi.shape[-1] == w2.shape[-1])
 
         return phi * w2
 
