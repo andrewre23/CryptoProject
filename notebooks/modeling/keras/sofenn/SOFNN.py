@@ -69,10 +69,35 @@ class SOFNN(object):
 
     * = samples
 
+    Parameters
+    ==========
+    - X_train : training input data
+        - shape :(samples, features)
+    - X_test  : testing input data
+        - shape: (samples, features)
+    - y_train : training output data
+        - shape: (features,)
+    - y_test  : testing output data
+        - shape: (features,)
+
     Functions
     =========
+    - system_error_check :
+        - system error considers generalized performance of overall network
+        - add neuron if error above predefined error threshold (delta)
+    - if_part_check :
+        - if-part criterion checks if current fuzzy rules cover/cluster input vector suitably
+        -
+    - add_neuron :
+        - add one neuron to model
+    - prune_neuron :
+        - remove neuron from model
+
 
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, X_train, X_test, y_train, y_test):
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
