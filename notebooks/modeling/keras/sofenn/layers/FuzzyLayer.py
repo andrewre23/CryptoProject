@@ -154,7 +154,7 @@ class FuzzyLayer(Layer):
 
         Returns
         =======
-        output_shape : tensor
+        output_shape : tuple
             - output shape of layer
             - shape: (samples, neurons)
         """
