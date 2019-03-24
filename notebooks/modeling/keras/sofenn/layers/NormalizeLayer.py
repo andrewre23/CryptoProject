@@ -81,6 +81,10 @@ class NormalizedLayer(Layer):
         """
         sums = K.sum(x, axis=-1)
         sums = K.repeat_elements(K.expand_dims(sums, axis=-1), self.output_dim, -1)
+
+        # assert tensor shapes
+        assert(x.shape == sums.shape)
+
         return x / sums
 
     def compute_output_shape(self, input_shape):
