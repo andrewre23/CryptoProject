@@ -31,11 +31,11 @@ class NormalizedLayer(Layer):
     - number of outputs equal to previous layer (# of neurons)
     - output for Normalized Layer is:
 
-        PHI(j) = phi(j) / sum[k=1, u; phi(k)]
+        psi(j) = phi(j) / sum[k=1, u; phi(k)]
                 for u neurons
         - with:
 
-        phi(j) = output of Fuzzy Layer neuron j
+        psi(j) = output of Fuzzy Layer neuron j
     """
 
     def __init__(self,
@@ -73,10 +73,10 @@ class NormalizedLayer(Layer):
 
         Returns
         =======
-        phi_norm : tensor
+        psi : tensor
             - output of each neuron after normalization step
             - divide each output by sum of output of all neurons
-            - phi_norm(j) for jth neuron
+            - psi(j) for jth neuron
             - shape: (samples, neurons)
         """
         sums = K.sum(x, axis=-1)
