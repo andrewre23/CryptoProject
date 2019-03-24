@@ -40,11 +40,11 @@ class WeightedLayer(Layer):
         w2j    = Aj * B =
                  aj0 + aj1x1 + aj2x2 + ... ajrxr
 
-        PHI(j) = output of jth neuron from
+        psi(j) = output of jth neuron from
                 normalized layer
 
     -output for fuzzy layer is:
-        fj     = w2j PHI(j)
+        fj     = w2j psi(j)
     """
 
     def __init__(self,
@@ -64,9 +64,9 @@ class WeightedLayer(Layer):
         Parameters
         ==========
         input_shape : list of tuples
-            - [x shape, phi shape]
+            - [x shape, psi shape]
             - x shape: (samples, features)
-            - phi shape: (samples, neurons)
+            - psi shape: (samples, neurons)
 
         Attributes
         ==========
@@ -92,10 +92,10 @@ class WeightedLayer(Layer):
         Parameters
         ==========
         x : list of tensors
-            - list of tensor with input data and phi output of previous layer
-            - [x, phi]
+            - list of tensor with input data and psi output of previous layer
+            - [x, psi]
             - x shape: (samples, features)
-            - phi shape: (samples, neurons)
+            - psi shape: (samples, neurons)
 
         Attributes
         ==========
@@ -111,13 +111,13 @@ class WeightedLayer(Layer):
         Returns
         =======
         f: tensor
-            - phi(neurons,)
+            - psi(neurons,)
             - output of each neuron in fuzzy layer
             - shape: (neurons,)
         """
         # assert multi-input as list and read in inputs
         assert isinstance(x, list)
-        x, phi = x
+        x, psi = x
 
         # align tensors by prepending bias value for input tensor in b
         # b shape: (samples, 1)
@@ -130,10 +130,10 @@ class WeightedLayer(Layer):
         assert(aligned_b.shape[-1] == aligned_a.shape[0])
         w2 = K.tf.matmul(aligned_b, aligned_a)
 
-        # assert phi and resulting w2 vector are compatible
-        assert (phi.shape[-1] == w2.shape[-1])
+        # assert psi and resulting w2 vector are compatible
+        assert (psi.shape[-1] == w2.shape[-1])
 
-        return phi * w2
+        return psi * w2
 
     def compute_output_shape(self, input_shape):
         """
@@ -142,9 +142,9 @@ class WeightedLayer(Layer):
         Parameters
         ==========
         input_shape : list of tuples
-            - [x, phi]
+            - [x, psi]
             - x shape: (samples, features)
-            - phi shape: (samples, neurons)
+            - psi shape: (samples, neurons)
 
         Returns
         =======
@@ -154,6 +154,6 @@ class WeightedLayer(Layer):
         """
         # assert multi-input as list
         assert isinstance(input_shape, list)
-        x_shape, phi_shape = input_shape
+        x_shape, psi_shape = input_shape
 
         return tuple(x_shape[:-1]) + (self.output_dim,)
