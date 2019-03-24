@@ -20,8 +20,7 @@ import pandas as pd
 
 from keras import backend as K
 from keras.models import Model
-from keras import regularizers
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Activation
 
 # custom Fuzzy Layers
 from .layers import \
