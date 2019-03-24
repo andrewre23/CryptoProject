@@ -45,22 +45,27 @@ class SOFNN(object):
         - input shape  : (*, features)
     2 - Radial Basis Function Layer (Fuzzy Layer)
             layer to hold fuzzy rules for complex system
-        - input shape  : (*, features * neurons)
-        - output shape : (*, neurons)
+        - input : x
+            shape: (*, features * neurons)
+        - output : phi
+            shape : (*, neurons)
     3 - Normalized Layer
             normalize each output of previous layer as
             relative amount from sum of all previous outputs
-        - input shape  : (*, neurons)
-        - output shape : (*, neurons)
+        - input : phi
+            shape  : (*, neurons)
+        - output : psi
+            shape : (*, neurons)
     4 - Weighted Layer
             multiply bias vector (1+n_features, neurons) by
             parameter vector (1+n_features,) of parameters
             from each fuzzy rule
             multiply each product by output of each rule's
             layer from normalized layer
-        - input shape  : (1+features, 1) <- Aj
-        - input shape  : (1+features, 1) <- B
-        - output shape : (*, neurons)
+        - inputs : [x, psi]
+            shape  : [(*, 1+features), (*, neurons)]
+        - output : f
+            shape : (*, neurons)
     5 - Output Layer
             summation of incoming signals from weighted layer
         - input shape  : (*, neurons)
@@ -71,13 +76,13 @@ class SOFNN(object):
     Parameters
     ==========
     - X_train : training input data
-        - shape :(samples, features)
+        - shape :(train_*, features)
     - X_test  : testing input data
-        - shape: (samples, features)
+        - shape: (test_*, features)
     - y_train : training output data
-        - shape: (features,)
+        - shape: (train_*,)
     - y_test  : testing output data
-        - shape: (features,)
+        - shape: (test_*,)
 
     Functions
     =========
@@ -86,7 +91,6 @@ class SOFNN(object):
         - add neuron if error above predefined error threshold (delta)
     - if_part_check :
         - if-part criterion checks if current fuzzy rules cover/cluster input vector suitably
-        -
     - add_neuron :
         - add one neuron to model
     - prune_neuron :
