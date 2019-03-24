@@ -77,7 +77,7 @@ class FuzzyLayer(Layer):
 
         s : sigma
             - s(i,j)
-            - trainable weights for sigma of ith membership function of jth neuron
+            - trainable weights for width of ith membership function of jth neuron
             - shape: (features, neurons)
         """
         self.c = self.add_weight(name='c',
