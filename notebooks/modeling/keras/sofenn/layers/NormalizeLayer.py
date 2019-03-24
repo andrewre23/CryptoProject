@@ -79,7 +79,9 @@ class NormalizedLayer(Layer):
             - phi_norm(j) for jth neuron
             - shape: (neurons,)
         """
-        return x / K.sum(x)
+        sums = K.sum(x, axis=-1)
+        sums = K.repeat_elements(K.expand_dims(sums, axis=-1), self.output_dim, -1)
+        return x / sums
 
     def compute_output_shape(self, input_shape):
         return tuple(input_shape[:-1]) + (self.output_dim,)
