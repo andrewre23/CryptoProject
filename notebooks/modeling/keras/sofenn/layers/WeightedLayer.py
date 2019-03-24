@@ -134,12 +134,10 @@ class WeightedLayer(Layer):
         b = K.ones((K.tf.shape(x)[0], 1), dtype=x.dtype)
         aligned_b = K.concatenate([b, x])
         aligned_a = self.a
-        print('b shape: {}'.format(b.shape))
-        print('al_a shape: {}'.format(aligned_a.shape))
-        print('al_a.T shape: {}'.format(K.transpose(aligned_a).shape))
         print('al_b shape: {}'.format(aligned_b.shape))
-        print('al_b.T shape: {}'.format(K.transpose(aligned_b).shape))
+        print('al_a.T shape: {}'.format(K.transpose(aligned_a).shape))
         w2 = K.tf.matmul(aligned_b, K.transpose(aligned_a))
+
         print('\nOutput weight')
         print('w2 shape: {}'.format(w2.shape))
         print('phi shape: {}'.format(phi.shape))
