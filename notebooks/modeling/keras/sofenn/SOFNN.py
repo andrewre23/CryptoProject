@@ -104,6 +104,10 @@ class SOFNN(object):
         - train on data
     - evaluate_model :
         - evaluate model on test data
+    - get_layer :
+        - return layer object from model by name
+    - get_layer_weights :
+        - get current weights from any layer in model
     - get_layer_output :
         - get test output from any layer in model
     - loss_function :
@@ -146,6 +150,10 @@ class SOFNN(object):
         # initial training of model - yields predictions
         self._train_model(epochs=epochs, batch_size=batch_size)
         y_pred = self._evaluate_model(threshold=threshold)
+
+
+
+
 
     def add_neuron(self):
         """
@@ -227,6 +235,27 @@ class SOFNN(object):
         # return predicted values
         return y_pred
 
+    def _get_layer(self, layer=None):
+        """
+        Get layer object based on input parameter
+            - exception of Input layer
+
+        Parameters
+        ==========
+        layer : str or int
+            - layer to get weights from
+            - input can be layer name or index
+        """
+        # if named parameter
+        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
+            layer_out = self._model.get_layer(layer)
+        # if indexed parameter
+        elif layer in range(1, len(self._model.layers)):
+            layer_out = self._model.layers[layer]
+        else:
+            raise ValueError('Error: layer must be layer name or index')
+        return layer_out
+
     def _get_layer_weights(self, layer=None):
         """
         Get weights of layer based on input parameter
@@ -238,15 +267,7 @@ class SOFNN(object):
             - layer to get weights from
             - input can be layer name or index
         """
-        # if named parameter
-        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
-            weights = self._model.get_layer(layer).get_weights()
-        # if indexed parameter
-        elif layer in range(1, len(self._model.layers)):
-            weights = self._model.layers[layer].get_weights()
-        else:
-            raise ValueError('Error: layer must be layer name or index')
-        return weights
+        return self._get_layer(layer).get_weights()
 
     def _get_layer_output(self, layer=None):
         """
@@ -259,18 +280,9 @@ class SOFNN(object):
             - layer to get test output from
             - input can be layer name or index
         """
-        # if named parameter
-        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
-            layer_name = layer
-            intermediate_model = Model(inputs=self._model.input,
-                                       outputs=self._model.get_layer(
-                                           layer_name).output)
-        # if indexed parameter
-        elif layer in range(1, len(self._model.layers)):
-            intermediate_model = Model(inputs=self._model.input,
-                                       outputs=self._model.layers[layer].output)
-        else:
-            raise ValueError('Error: layer must be layer name or index')
+        last_layer = self._get_layer(layer)
+        intermediate_model = Model(inputs=self._model.input,
+                                   outputs=last_layer.output)
         return intermediate_model.predict(self._X_test)
 
     def _error_criterion(self, y_pred, delta=0.12):
