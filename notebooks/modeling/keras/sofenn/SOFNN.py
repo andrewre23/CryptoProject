@@ -32,7 +32,7 @@ from .layers import \
 class SOFNN(object):
     """
     Self-Organizing Fuzzy Neural Network
-    =======================================================
+    ====================================
 
     -Implemented per description in:
         "An on-line algorithm for creating self-organizing
@@ -227,6 +227,27 @@ class SOFNN(object):
         # return predicted values
         return y_pred
 
+    def _get_layer_weights(self, layer=None):
+        """
+        Get weights of layer based on input parameter
+            - exception of Input layer
+
+        Parameters
+        ==========
+        layer : str or int
+            - layer to get weights from
+            - input can be layer name or index
+        """
+        # if named parameter
+        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
+            weights = self._model.get_layer(layer).get_weights()
+        # if indexed parameter
+        elif layer in range(1, len(self._model.layers)):
+            weights = self._model.layers[layer].get_weights()
+        else:
+            raise ValueError('Error: layer must be layer name or index')
+        return weights
+
     def _get_layer_output(self, layer=None):
         """
         Get output of layer based on input parameter
@@ -251,22 +272,6 @@ class SOFNN(object):
         else:
             raise ValueError('Error: layer must be layer name or index')
         return intermediate_model.predict(self._X_test)
-
-    @staticmethod
-    def _loss_function(y_true, y_pred):
-        """
-        Custom loss function
-
-        E = exp{-sum[i=1,j; 1/2 * [pred(j) - test(j)]^2]}
-
-        Parameters
-        ==========
-        y_true : array
-            - true values
-        y_pred : array
-            - predicted values
-        """
-        return K.sum(1 / 2 * K.square(y_pred - y_true))
 
     def _error_criterion(self, y_pred, delta=0.12):
         """
@@ -302,7 +307,18 @@ class SOFNN(object):
         # return True if at least half of samples agree
         return (maxes.sum() / len(maxes)) >= 0.5
 
-    def add_neuron(self):
+    @staticmethod
+    def _loss_function(y_true, y_pred):
         """
-        Rebuild model but with extra neuron
+        Custom loss function
+
+        E = exp{-sum[i=1,j; 1/2 * [pred(j) - test(j)]^2]}
+
+        Parameters
+        ==========
+        y_true : array
+            - true values
+        y_pred : array
+            - predicted values
         """
+        return K.sum(1 / 2 * K.square(y_pred - y_true))
