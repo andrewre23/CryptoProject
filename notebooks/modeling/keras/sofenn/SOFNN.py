@@ -85,19 +85,35 @@ class SOFNN(object):
         - input shape  : (*, neurons)
         - output shape : (*,)
 
-    Functions
-    =========
-    - error_criterion :
-        - system error considers generalized performance of overall network
-        - add neuron if error above predefined error threshold (delta)
-    - if_part_criterion :
-        - if-part criterion checks if current fuzzy rules cover/cluster input vector suitably
+    Methods
+    =======
+    - self_organize :
+        - run main logic to organize FNN
     - add_neuron :
         - add one neuron to model
     - prune_neuron :
         - remove neuron from model
     - combine_membership_functions :
         - combine similar membership functions
+
+    Secondary Methods
+    =================
+    - build_model :
+        - build and compile model
+    - train_model :
+        - train on data
+    - evaluate_model :
+        - evaluate model on test data
+    - get_layer_output :
+        - get test output from any layer in model
+    - loss_function :
+        - custom loss function per Leng, Prasad, McGinnity (2004)
+    - error_criterion :
+        - considers generalized performance of overall network
+        - add neuron if error above predefined error threshold (delta)
+    - if_part_criterion :
+        - checks if current fuzzy rules cover/cluster input vector suitably
+
     """
 
     def __init__(self, X_train, X_test, y_train, y_test, neurons=1):
@@ -112,6 +128,30 @@ class SOFNN(object):
 
         # build model on init
         self._model = self._build_model()
+
+    def self_organize(self, epochs=50, batch_size=None,
+                      threshold=0.5):
+        """
+        Main run function to handle organization logic
+
+        Parameters
+        ==========
+        epochs : int
+            - number of training epochs
+        batch_size : int
+            - size of training batch
+        threshold : float
+            - cutoff for 0/1 class
+        """
+        # initial training of model - yields predictions
+        self._train_model(epochs=epochs, batch_size=batch_size)
+        y_pred = self._evaluate_model(threshold=threshold)
+
+    def add_neuron(self):
+        """
+        Rebuild model but with extra neuron
+        """
+        pass
 
     def _build_model(self):
         """
@@ -143,7 +183,7 @@ class SOFNN(object):
 
         return model
 
-    def train_model(self, epochs=50, batch_size=None):
+    def _train_model(self, epochs=50, batch_size=None):
         """
         Run currently saved model
 
@@ -158,7 +198,7 @@ class SOFNN(object):
         self._model.fit(self._X_train, self._y_train,
                         epochs=epochs, batch_size=batch_size, shuffle=False)
 
-    def evaluate_model(self, threshold=0.5):
+    def _evaluate_model(self, threshold=0.5):
         """
         Evaluate currently trained model
 
@@ -228,7 +268,7 @@ class SOFNN(object):
         """
         return K.sum(1 / 2 * K.square(y_pred - y_true))
 
-    def error_criterion(self, y_pred, delta=0.12):
+    def _error_criterion(self, y_pred, delta=0.12):
         """
         Check error criterion for neuron-adding process
             - return True if no need to grow neuron
@@ -244,11 +284,11 @@ class SOFNN(object):
         # mean of absolute test difference
         return np.abs(y_pred - self._y_test).mean() <= delta
 
-    def if_part_criterion(self, threshold=0.1354):
+    def _if_part_criterion(self, threshold=0.1354):
         """
         Check if-part criterion for neuron adding process
             - for each sample, get max of all neuron outputs (pre-normalization)
-            - test where
+            - test whether max val at or above threshold
 
         Parameters
         ==========
@@ -261,3 +301,8 @@ class SOFNN(object):
         maxes = np.max(fuzz_out, axis=-1) >= threshold
         # return True if at least half of samples agree
         return (maxes.sum() / len(maxes)) >= 0.5
+
+    def add_neuron(self):
+        """
+        Rebuild model but with extra neuron
+        """
