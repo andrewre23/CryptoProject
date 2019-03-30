@@ -146,6 +146,13 @@ class SOFNN(object):
     def train_model(self, epochs=50, batch_size=None):
         """
         Run currently saved model
+
+        Parameters
+        ==========
+        epochs : int
+            - number of training epochs
+        batch_size : int
+            - size of training batch
         """
         # fit model and evaluate
         self._model.fit(self._X_train, self._y_train,
@@ -154,6 +161,11 @@ class SOFNN(object):
     def evaluate_model(self, threshold=0.5):
         """
         Evaluate currently trained model
+
+        Parameters
+        ==========
+        threshold : float
+            - cutoff threshold for positive/negative classes
         """
         scores = self._model.evaluate(self._X_test, self._y_test, verbose=1)
         accuracy = scores[1] * 100
@@ -178,7 +190,12 @@ class SOFNN(object):
     def _get_layer_output(self, layer=None):
         """
         Get output of layer based on input parameter
-        - input can be layer name or layer index
+
+        Parameters
+        ==========
+        layer: str or int
+            - layer to get test output from
+            - input can be layer name or index
         """
         # if named parameter
         if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
@@ -200,5 +217,26 @@ class SOFNN(object):
         Custom loss function
 
         E = exp{-sum[i=1,j; 1/2 * [pred(j) - test(j)]^2]}
+
+        Parameters
+        ==========
+        y_true: array
+            - true values
+        y_pred: array
+            - predicted values
         """
         return K.sum(1 / 2 * K.square(y_pred - y_true))
+
+    def error_criterion(self, y_pred, delta=0.12):
+        """
+        Calculate error criterion for neuron-adding process
+            - return True if no need to grow neuron
+            - return False if above threshold and need to add neuron
+
+        Parameters
+        ==========
+        delta: float
+            - threshold for error criterion whether new neuron to be added
+        """
+        return np.abs(y_pred - self._y_test).mean() <= delta
+
