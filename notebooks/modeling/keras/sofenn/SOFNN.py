@@ -171,3 +171,15 @@ class SOFNN(object):
         print('\nClassification Report')
         print('=' * 20)
         print(classification_report(self._y_test, y_pred, labels=[0, 1]))
+
+        # return predicted values
+        return y_pred
+
+    @staticmethod
+    def loss_function(y_true, y_pred):
+        """
+        Custom loss function
+
+        E = exp{-sum[i=1,j; 1/2 * [pred(j) - test(j)]^2]}
+        """
+        return K.sum(1/2 * K.square(y_pred - y_true))
