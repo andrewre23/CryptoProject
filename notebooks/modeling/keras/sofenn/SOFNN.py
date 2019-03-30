@@ -175,7 +175,7 @@ class SOFNN(object):
         # return predicted values
         return y_pred
 
-    def get_layer_output(self, layer=None):
+    def _get_layer_output(self, layer=None):
         """
         Get output of layer based on input parameter
         - input can be layer name or layer index
@@ -195,7 +195,7 @@ class SOFNN(object):
         return intermediate_model.predict(self._X_test)
 
     @staticmethod
-    def loss_function(y_true, y_pred):
+    def _loss_function(y_true, y_pred):
         """
         Custom loss function
 
