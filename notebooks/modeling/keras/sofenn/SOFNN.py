@@ -87,10 +87,10 @@ class SOFNN(object):
 
     Functions
     =========
-    - system_error_check :
+    - error_criterion :
         - system error considers generalized performance of overall network
         - add neuron if error above predefined error threshold (delta)
-    - if_part_check :
+    - if_part_criterion :
         - if-part criterion checks if current fuzzy rules cover/cluster input vector suitably
     - add_neuron :
         - add one neuron to model
@@ -190,10 +190,11 @@ class SOFNN(object):
     def _get_layer_output(self, layer=None):
         """
         Get output of layer based on input parameter
+            - exception of Input layer
 
         Parameters
         ==========
-        layer: str or int
+        layer : str or int
             - layer to get test output from
             - input can be layer name or index
         """
@@ -204,7 +205,7 @@ class SOFNN(object):
                                        outputs=self._model.get_layer(
                                            layer_name).output)
         # if indexed parameter
-        elif layer in range(len(self._model.layers)):
+        elif layer in range(1, len(self._model.layers)):
             intermediate_model = Model(inputs=self._model.input,
                                        outputs=self._model.layers[layer].output)
         else:
@@ -220,23 +221,43 @@ class SOFNN(object):
 
         Parameters
         ==========
-        y_true: array
+        y_true : array
             - true values
-        y_pred: array
+        y_pred : array
             - predicted values
         """
         return K.sum(1 / 2 * K.square(y_pred - y_true))
 
     def error_criterion(self, y_pred, delta=0.12):
         """
-        Calculate error criterion for neuron-adding process
+        Check error criterion for neuron-adding process
             - return True if no need to grow neuron
             - return False if above threshold and need to add neuron
 
         Parameters
         ==========
-        delta: float
+        y_pred : array
+            - predictions
+        delta : float
             - threshold for error criterion whether new neuron to be added
         """
+        # mean of absolute test difference
         return np.abs(y_pred - self._y_test).mean() <= delta
 
+    def if_part_criterion(self, threshold=0.1354):
+        """
+        Check if-part criterion for neuron adding process
+            - for each sample, get max of all neuron outputs (pre-normalization)
+            - test where
+
+        Parameters
+        ==========
+        threshold : float
+            - threshold for if-part detections
+        """
+        # get max val
+        fuzz_out = self._get_layer_output('FuzzyRules')
+        # check if max neuron output is above threshold
+        maxes = np.max(fuzz_out, axis=-1) >= threshold
+        # return True if at least half of samples agree
+        return (maxes.sum() / len(maxes)) >= 0.5
