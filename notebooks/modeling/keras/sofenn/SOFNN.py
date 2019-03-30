@@ -134,7 +134,7 @@ class SOFNN(object):
         psi = norm(phi)
         f = weights([inputs, psi])
         raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
-        preds = Activation(name='OutputActivation', activation='relu')(raw_output)
+        preds = Activation(name='OutputActivation', activation='sigmoid')(raw_output)
 
         # compile model and output summary
         model = Model(inputs=inputs, outputs=preds)
@@ -175,6 +175,25 @@ class SOFNN(object):
         # return predicted values
         return y_pred
 
+    def get_layer_output(self, layer=None):
+        """
+        Get output of layer based on input parameter
+        - input can be layer name or layer index
+        """
+        # if named parameter
+        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
+            layer_name = layer
+            intermediate_model = Model(inputs=self._model.input,
+                                       outputs=self._model.get_layer(
+                                           layer_name).output)
+        # if indexed parameter
+        elif layer in range(len(self._model.layers)):
+            intermediate_model = Model(inputs=self._model.input,
+                                       outputs=self._model.layers[layer].output)
+        else:
+            raise ValueError('Error: layer must be layer name or index')
+        return intermediate_model.predict(self._X_test)
+
     @staticmethod
     def loss_function(y_true, y_pred):
         """
@@ -182,4 +201,4 @@ class SOFNN(object):
 
         E = exp{-sum[i=1,j; 1/2 * [pred(j) - test(j)]^2]}
         """
-        return K.sum(1/2 * K.square(y_pred - y_true))
+        return K.sum(1 / 2 * K.square(y_pred - y_true))
