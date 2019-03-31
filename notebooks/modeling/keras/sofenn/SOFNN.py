@@ -26,7 +26,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 # custom Fuzzy Layers
 from .layers import \
-    FuzzyLayer, NormalizedLayer, WeightedLayer
+    FuzzyLayer, NormalizedLayer, WeightedLayer, OutputLayer
 
 
 class SOFNN(object):
@@ -135,7 +135,7 @@ class SOFNN(object):
         self._neurons = neurons
 
         # build model on init
-        self._model = self._build_model()
+        self._build_model()
 
     def self_organize(self, epochs=50, batch_size=None, eval_thresh=0.5,
                       ifpart_thresh=0.1354, delta=0.12,
@@ -206,7 +206,9 @@ class SOFNN(object):
         """
         if self.debug:
             print('Adding neuron...')
-        pass
+
+        # increase neurons
+        self._neurons += 1
 
     def widen_centers(self, ksig=1.12, max_widens=250):
         """
@@ -239,8 +241,11 @@ class SOFNN(object):
             # check if max iterations exceeded
             if counter > max_widens:
                 if self.debug:
-                    print('Max iterations reached - resetting weights')
+                    print('Max iterations reached ({}) - resetting weights'
+                          .format(counter-1))
                 return False
+            if self.debug and counter % 20 == 0:
+                print('Iteration {}'.format(counter))
 
             # get neuron with max-output for each sample
             # then select the most common one to update
@@ -311,12 +316,14 @@ class SOFNN(object):
         fuzz = FuzzyLayer(self._neurons)
         norm = NormalizedLayer(self._neurons)
         weights = WeightedLayer(self._neurons)
+        raw = OutputLayer()
 
         # run through layers
         phi = fuzz(inputs)
         psi = norm(phi)
         f = weights([inputs, psi])
-        raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
+        raw_output = raw(f)
+        #raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
         preds = Activation(name='OutputActivation', activation='sigmoid')(raw_output)
 
         # compile model and output summary
@@ -325,7 +332,7 @@ class SOFNN(object):
         if self.debug:
             print(model.summary())
 
-        return model
+        self._model = model
 
     def _train_model(self, epochs=50, batch_size=None):
         """
