@@ -158,6 +158,8 @@ class SOFNN(object):
             - cutoff for 0/1 class
         ifpart_thresh : float
             - threshold for if-part
+        delta : float
+            - threshold for error criterion whether new neuron to be added
         ksig : float
             - factor to widen centers
         max_widens : int
