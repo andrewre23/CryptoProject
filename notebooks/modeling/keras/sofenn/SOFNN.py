@@ -201,7 +201,7 @@ class SOFNN(object):
         # add neuron if necessary
         if not self.error_criterion(y_pred=y_pred, delta=delta):
             # reset fuzzy weights if previously widened
-            if self._get_layer_weights('FuzzyRules') != start_weights:
+            if not np.array_equal(start_weights, self._get_layer_weights('FuzzyRules')):
                 self._get_layer('FuzzyRules').set_weights(start_weights)
             self.add_neuron()
 
@@ -246,7 +246,7 @@ class SOFNN(object):
             # check if max iterations exceeded
             if counter > max_widens:
                 if self.debug:
-                    print('Max iterations reached ({}) - resetting weights'
+                    print('Max iterations reached ({})'
                           .format(counter-1))
                 return False
             if self.debug and counter % 20 == 0:
@@ -308,6 +308,8 @@ class SOFNN(object):
     def _build_model(self):
         """
         Create and compile model
+
+        - sets compiled model as self._model
         """
 
         if self.debug:
@@ -337,7 +339,7 @@ class SOFNN(object):
         if self.debug:
             print(model.summary())
 
-        self._model = model
+        self.model = model
 
     def _train_model(self, epochs=50, batch_size=None):
         """
@@ -351,8 +353,8 @@ class SOFNN(object):
             - size of training batch
         """
         # fit model and evaluate
-        self._model.fit(self._X_train, self._y_train,
-                        epochs=epochs, batch_size=batch_size, shuffle=False)
+        self.model.fit(self._X_train, self._y_train,
+                       epochs=epochs, batch_size=batch_size, shuffle=False)
 
     def _evaluate_model(self, eval_thresh=0.5):
         """
@@ -363,7 +365,7 @@ class SOFNN(object):
         eval_thresh : float
             - cutoff threshold for positive/negative classes
         """
-        scores = self._model.evaluate(self._X_test, self._y_test, verbose=1)
+        scores = self.model.evaluate(self._X_test, self._y_test, verbose=1)
         accuracy = scores[1] * 100
         print("\nAccuracy: {:.2f}%".format(accuracy))
 
@@ -371,7 +373,7 @@ class SOFNN(object):
         print('\nConfusion Matrix')
         print('=' * 20)
         y_pred = np.squeeze(np.where(
-            self._model.predict(self._X_test) >= eval_thresh, 1, 0), axis=-1)
+            self.model.predict(self._X_test) >= eval_thresh, 1, 0), axis=-1)
         print(pd.DataFrame(confusion_matrix(self._y_test, y_pred),
                            index=['true:no', 'true:yes'], columns=['pred:no', 'pred:yes']))
 
@@ -395,11 +397,11 @@ class SOFNN(object):
             - input can be layer name or index
         """
         # if named parameter
-        if layer in [mlayer.name for mlayer in self._model.layers[1:]]:
-            layer_out = self._model.get_layer(layer)
+        if layer in [mlayer.name for mlayer in self.model.layers[1:]]:
+            layer_out = self.model.get_layer(layer)
         # if indexed parameter
-        elif layer in range(1, len(self._model.layers)):
-            layer_out = self._model.layers[layer]
+        elif layer in range(1, len(self.model.layers)):
+            layer_out = self.model.layers[layer]
         else:
             raise ValueError('Error: layer must be layer name or index')
         return layer_out
@@ -429,7 +431,7 @@ class SOFNN(object):
             - input can be layer name or index
         """
         last_layer = self._get_layer(layer)
-        intermediate_model = Model(inputs=self._model.input,
+        intermediate_model = Model(inputs=self.model.input,
                                    outputs=last_layer.output)
         return intermediate_model.predict(self._X_test)
 
