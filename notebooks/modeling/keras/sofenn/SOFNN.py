@@ -89,7 +89,7 @@ class SOFNN(object):
 
     """
 
-    def __init__(self, X_train, X_test, y_train, y_test, neurons=1, debug=True):
+    def __init__(self, X_train, X_test, y_train, y_test, s_init=4, debug=True):
         # set debug flag
         self.__debug = debug
 
@@ -99,10 +99,11 @@ class SOFNN(object):
         self._y_train = y_train
         self._y_test = y_test
         # set initial number of neurons
-        self.__neurons = neurons
+        self.__neurons = 1
 
         # build model on init
         self.build_model()
+        self.__initialize_model(s_init=s_init)
 
     def build_model(self):
         """
@@ -255,7 +256,8 @@ class SOFNN(object):
 
     def add_neuron(self):
         """
-        Rebuild model but with extra neuron
+        Add extra neuron to model while
+        keeping current neuron weights
         """
         if self.__debug:
             print('\nAdding neuron...')
@@ -281,8 +283,8 @@ class SOFNN(object):
 
         # validate weights updated as expected
         final_weights = self._get_layer_weights('FuzzyRules')
-        assert np.allclose(final_weights[0], final_weights[0])
-        assert np.allclose(final_weights[1], final_weights[1])
+        assert np.allclose(new_weights[0], final_weights[0])
+        assert np.allclose(new_weights[1], final_weights[1])
 
     def widen_centers(self, ksig=1.12, max_widens=250):
         """
@@ -372,6 +374,25 @@ class SOFNN(object):
         maxes = np.max(fuzz_out, axis=-1) >= ifpart_thresh
         # return True if at least half of samples agree
         return (maxes.sum() / len(maxes)) >= 0.5
+
+    def __initialize_model(self, s_init=4):
+        """
+        Initialize neuron weights
+
+        c_init = Average(X).T
+        s_init = s_init
+
+        """
+        # derive initial c and s
+        c_init = self._X_train.values.mean(axis=0, keepdims=True).T
+        s_init = np.repeat(s_init, c_init.size).reshape(c_init.shape)
+        start_weights = [c_init, s_init]
+        self._get_layer('FuzzyRules').set_weights(start_weights)
+
+        # validate weights updated as expected
+        final_weights = self._get_layer_weights('FuzzyRules')
+        assert np.allclose(start_weights[0], final_weights[0])
+        assert np.allclose(start_weights[1], final_weights[1])
 
     def _train_model(self, epochs=50, batch_size=None):
         """
