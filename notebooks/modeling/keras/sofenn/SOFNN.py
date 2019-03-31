@@ -89,7 +89,7 @@ class SOFNN(object):
 
     """
 
-    def __init__(self, X_train, X_test, y_train, y_test, s_init=4, debug=True):
+    def __init__(self, X_train, X_test, y_train, y_test, neurons=1, s_init=4, debug=True):
         # set debug flag
         self.__debug = debug
 
@@ -99,11 +99,12 @@ class SOFNN(object):
         self._y_train = y_train
         self._y_test = y_test
         # set initial number of neurons
-        self.__neurons = 1
+        self.__neurons = neurons
 
         # build model on init
         self.build_model()
-        self.__initialize_model(s_init=s_init)
+        if self.__neurons == 1:
+            self.__initialize_model(s_init=s_init)
 
     def build_model(self):
         """
@@ -203,8 +204,10 @@ class SOFNN(object):
         """
         # initial training of model - yields predictions
         if self.__debug:
-            print('\nBeginning model training...')
+            print('Beginning model training...')
         self._train_model(epochs=epochs, batch_size=batch_size)
+        if self.__debug:
+            print('Initial Model Evaluation')
         y_pred = self._evaluate_model(eval_thresh=eval_thresh)
 
         # run update logic until passes criterion checks
