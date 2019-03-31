@@ -169,9 +169,15 @@ class SOFNN(object):
         self._train_model(epochs=epochs, batch_size=batch_size)
         y_pred = self._evaluate_model(eval_thresh=eval_thresh)
 
-        # run criterion checks and organize accordingly
-        self.run_criterion_checks(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
-                                  ksig=ksig, max_widens=max_widens, delta=delta)
+        # run update logic until passes criterion checks
+        while not self.error_criterion(y_pred, delta=delta) and \
+                not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
+            # run criterion checks and organize accordingly
+            self.run_criterion_checks(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
+                                      ksig=ksig, max_widens=max_widens, delta=delta)
+        if self.debug:
+            print('Self-Organization complete!')
+            print('If-Part and Error Criterion satisfied')
 
     def run_criterion_checks(self, y_pred, ifpart_thresh=0.1354,
                              ksig=1.12, max_widens=250, delta=0.12):
@@ -247,7 +253,7 @@ class SOFNN(object):
             if counter > max_widens:
                 if self.debug:
                     print('Max iterations reached ({})'
-                          .format(counter-1))
+                          .format(counter - 1))
                 return False
             if self.debug and counter % 20 == 0:
                 print('Iteration {}'.format(counter))
@@ -330,7 +336,7 @@ class SOFNN(object):
         psi = norm(phi)
         f = weights([inputs, psi])
         raw_output = raw(f)
-        #raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
+        # raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
         preds = Activation(name='OutputActivation', activation='sigmoid')(raw_output)
 
         # compile model and output summary
