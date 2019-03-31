@@ -192,14 +192,17 @@ class SOFNN(object):
             - threshold for error criterion whether new neuron to be added
         """
 
-        # get old weights and create current weight vars
-        start_weights = self._get_layer('FuzzyRules').get_weights()
+        # get copy of initial fuzzy weights
+        start_weights = self._get_layer_weights('FuzzyRules')
 
         # widen centers if necessary
         if not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
             self.widen_centers(ksig=ksig, max_widens=max_widens)
+        # add neuron if necessary
         if not self.error_criterion(y_pred=y_pred, delta=delta):
-            self._get_layer('FuzzyRules').set_weights(start_weights)
+            # reset fuzzy weights if previously widened
+            if self._get_layer_weights('FuzzyRules') != start_weights:
+                self._get_layer('FuzzyRules').set_weights(start_weights)
             self.add_neuron()
 
     def add_neuron(self):
