@@ -160,7 +160,7 @@ class SOFNN(object):
             - threshold for if-part
         ksig : float
             - factor to widen centers
-        max_iters : int
+        max_widens : int
             - max iterations for widening centers
         """
         # initial training of model - yields predictions
@@ -184,7 +184,7 @@ class SOFNN(object):
             - threshold for if-part
         ksig : float
             - factor to widen centers
-        max_iters : int
+        max_widens : int
             - max iterations for widening centers
         delta : float
             - threshold for error criterion whether new neuron to be added
@@ -194,9 +194,9 @@ class SOFNN(object):
         start_weights = self._get_layer('FuzzyRules').get_weights()
 
         # widen centers if necessary
-        if not self._if_part_criterion(ifpart_thresh=ifpart_thresh):
+        if not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
             self.widen_centers(ksig=ksig, max_widens=max_widens)
-        if not self._error_criterion(y_pred=y_pred, delta=delta):
+        if not self.error_criterion(y_pred=y_pred, delta=delta):
             self._get_layer('FuzzyRules').set_weights(start_weights)
             self.add_neuron()
 
@@ -216,7 +216,7 @@ class SOFNN(object):
         ==========
         ksig : float
             - multiplicative factor widening centers
-        max_iters : int
+        max_widens : int
             - number of max iterations to update centers before ending
         """
         # print alert of successful widening
@@ -233,7 +233,7 @@ class SOFNN(object):
         # repeat until if-part criterion satisfied
         # only perform for max iterations
         counter = 0
-        while not self._if_part_criterion():
+        while not self.if_part_criterion():
 
             counter += 1
             # check if max iterations exceeded
@@ -252,14 +252,48 @@ class SOFNN(object):
             # and multiply by factor
             mf_min = s[:, max_neuron].argmin()
             s[mf_min, max_neuron] = ksig * s[mf_min, max_neuron]
-            # update weights
 
+            # update weights
             new_weights = [c, s]
             fuzz.set_weights(new_weights)
 
         # print alert of successful widening
         if self.debug:
             print('Centers widened after {} iterations'.format(counter))
+
+    def error_criterion(self, y_pred, delta=0.12):
+        """
+        Check error criterion for neuron-adding process
+            - return True if no need to grow neuron
+            - return False if above threshold and need to add neuron
+
+        Parameters
+        ==========
+        y_pred : array
+            - predictions
+        delta : float
+            - threshold for error criterion whether new neuron to be added
+        """
+        # mean of absolute test difference
+        return np.abs(y_pred - self._y_test).mean() <= delta
+
+    def if_part_criterion(self, ifpart_thresh=0.1354):
+        """
+        Check if-part criterion for neuron adding process
+            - for each sample, get max of all neuron outputs (pre-normalization)
+            - test whether max val at or above threshold
+
+        Parameters
+        ==========
+        ifpart_thresh : float
+            - threshold for if-part detections
+        """
+        # get max val
+        fuzz_out = self._get_layer_output('FuzzyRules')
+        # check if max neuron output is above threshold
+        maxes = np.max(fuzz_out, axis=-1) >= ifpart_thresh
+        # return True if at least half of samples agree
+        return (maxes.sum() / len(maxes)) >= 0.5
 
     def _build_model(self):
         """
@@ -336,40 +370,6 @@ class SOFNN(object):
 
         # return predicted values
         return y_pred
-
-    def _error_criterion(self, y_pred, delta=0.12):
-        """
-        Check error criterion for neuron-adding process
-            - return True if no need to grow neuron
-            - return False if above threshold and need to add neuron
-
-        Parameters
-        ==========
-        y_pred : array
-            - predictions
-        delta : float
-            - threshold for error criterion whether new neuron to be added
-        """
-        # mean of absolute test difference
-        return np.abs(y_pred - self._y_test).mean() <= delta
-
-    def _if_part_criterion(self, ifpart_thresh=0.1354):
-        """
-        Check if-part criterion for neuron adding process
-            - for each sample, get max of all neuron outputs (pre-normalization)
-            - test whether max val at or above threshold
-
-        Parameters
-        ==========
-        ifpart_thresh : float
-            - threshold for if-part detections
-        """
-        # get max val
-        fuzz_out = self._get_layer_output('FuzzyRules')
-        # check if max neuron output is above threshold
-        maxes = np.max(fuzz_out, axis=-1) >= ifpart_thresh
-        # return True if at least half of samples agree
-        return (maxes.sum() / len(maxes)) >= 0.5
 
     def _get_layer(self, layer=None):
         """
