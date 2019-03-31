@@ -180,7 +180,7 @@ class SOFNN(object):
 
         Parameters
         ==========
-        y_pred : array
+        y_pred : np.array
             - predictions
         ifpart_thresh : float
             - threshold for if-part
@@ -279,7 +279,7 @@ class SOFNN(object):
 
         Parameters
         ==========
-        y_pred : array
+        y_pred : np.array
             - predictions
         delta : float
             - threshold for error criterion whether new neuron to be added
@@ -444,9 +444,9 @@ class SOFNN(object):
 
         Parameters
         ==========
-        y_true : array
+        y_true : np.array
             - true values
-        y_pred : array
+        y_pred : np.array
             - predicted values
         """
         return K.sum(1 / 2 * K.square(y_pred - y_true))
