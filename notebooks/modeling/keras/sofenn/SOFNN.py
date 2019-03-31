@@ -168,7 +168,7 @@ class SOFNN(object):
 
         # compile model and output summary
         model = Model(inputs=inputs, outputs=preds)
-        model.compile(loss=self._loss_function, optimizer='adam', metrics=['accuracy', 'mape'])
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', 'mape'])
         if self.__debug:
             print(model.summary())
 
