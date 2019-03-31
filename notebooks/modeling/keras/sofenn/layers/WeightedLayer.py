@@ -43,7 +43,7 @@ class WeightedLayer(Layer):
         psi(j) = output of jth neuron from
                 normalized layer
 
-    -output for fuzzy layer is:
+    -output for weighted layer is:
         fj     = w2j psi(j)
     """
 
