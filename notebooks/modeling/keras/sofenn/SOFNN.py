@@ -173,14 +173,14 @@ class SOFNN(object):
         while not self.error_criterion(y_pred, delta=delta) and \
                 not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
             # run criterion checks and organize accordingly
-            self.run_criterion_checks(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
-                                      ksig=ksig, max_widens=max_widens, delta=delta)
+            self.organize(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
+                          ksig=ksig, max_widens=max_widens, delta=delta)
         if self.debug:
             print('Self-Organization complete!')
             print('If-Part and Error Criterion satisfied')
 
-    def run_criterion_checks(self, y_pred, ifpart_thresh=0.1354,
-                             ksig=1.12, max_widens=250, delta=0.12):
+    def organize(self, y_pred, ifpart_thresh=0.1354,
+                 ksig=1.12, max_widens=250, delta=0.12):
         """
         Run logic to check on system error or if-part criteron
 
