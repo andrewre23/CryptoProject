@@ -218,6 +218,9 @@ class SOFNN(object):
         if self.debug:
             print('Adding neuron...')
 
+        # get current weights
+
+
         # increase neurons
         self._neurons += 1
 
@@ -240,8 +243,7 @@ class SOFNN(object):
         fuzz = self._get_layer('FuzzyRules')
 
         # get old weights and create current weight vars
-        weights = fuzz.get_weights()
-        c, s = weights[0], weights[1]
+        c, s = fuzz.get_weights()
 
         # repeat until if-part criterion satisfied
         # only perform for max iterations
@@ -370,6 +372,12 @@ class SOFNN(object):
         ==========
         eval_thresh : float
             - cutoff threshold for positive/negative classes
+
+        Returns
+        =======
+        y_pred : np.array
+            - predicted values
+            - shape: (samples,)
         """
         scores = self.model.evaluate(self._X_test, self._y_test, verbose=1)
         accuracy = scores[1] * 100
@@ -440,6 +448,73 @@ class SOFNN(object):
         intermediate_model = Model(inputs=self.model.input,
                                    outputs=last_layer.output)
         return intermediate_model.predict(self._X_test)
+
+    def _min_dist_vector(self):
+        """
+        Get minimum distance vector
+
+        Returns
+        =======
+        min_dist : np.array
+            - average minimum distance vector across samples
+            - shape: (features, neurons)
+        """
+        # get input values and fuzzy weights
+        x = self._X_train.values
+        samples = x.shape[0]
+        c = self._get_layer_weights('FuzzyRules')[0]
+
+        # align x and c and assert matching dims
+        aligned_x = x.repeat(self._neurons). \
+            reshape(x.shape + (self._neurons,))
+        aligned_c = c.repeat(samples).reshape((samples,) + c.shape)
+        assert aligned_x.shape == aligned_c.shape
+
+        # average the minimum distance across samples
+        return np.abs(aligned_x - aligned_c).mean(axis=0)
+
+    def _new_neuron_weights(self, dist_thresh=1):
+        """
+        Return new c and s weights for k new fuzzy neuron
+
+        Parameters
+        ==========
+        dist_thresh : float
+            - multiplier of average features values to use as distance thresholds
+
+        Returns
+        =======
+        ck : np.array
+            - average minimum distance vector across samples
+            - shape: (features,)
+        sk : np.array
+            - average minimum distance vector across samples
+            - shape: (features,)
+        """
+        # get input values and fuzzy weights
+        x = self._X_train.values
+        c, s = self._get_layer_weights('FuzzyRules')
+
+        # get minimum distance vector
+        min_dist = self._min_dist_vector()
+        # get minimum distance across neurons
+        # and arg-min for neuron with lowest distance
+        dist_vec = min_dist.min(axis=-1)
+        min_neurs = min_dist.argmin(axis=-1)
+
+        # get min c and s weights
+        c_min = c[:, min_neurs].diagonal()
+        s_min = s[:, min_neurs].diagonal()
+        assert c_min.shape == s_min.shape
+
+        # set threshold distance as factor of mean
+        # value for each feature across samples
+        kd_i = x.mean(axis=0) * dist_thresh
+
+        # get final weight vectors
+        ck = np.where(dist_vec <= kd_i, c_min, x.mean(axis=0))
+        sk = np.where(dist_vec <= kd_i, s_min, dist_vec)
+        return ck, sk
 
     @staticmethod
     def _loss_function(y_true, y_pred):
