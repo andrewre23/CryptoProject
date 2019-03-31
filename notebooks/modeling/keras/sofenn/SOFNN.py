@@ -23,7 +23,8 @@ from keras import backend as K
 from keras.models import Model
 from keras.layers import Input, Activation
 
-from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, \
+    mean_absolute_error, roc_auc_score
 
 # custom Fuzzy Layers
 from .layers import FuzzyLayer, NormalizedLayer, WeightedLayer, OutputLayer
@@ -438,17 +439,19 @@ class SOFNN(object):
         """
         # calculate accuracy scores
         scores = self.model.evaluate(self._X_test, self._y_test, verbose=1)
-        raw_preds = self.model.predict(self._X_test)
-        y_pred = np.squeeze(np.where(raw_preds >= eval_thresh, 1, 0), axis=-1)
+        raw_pred = self.model.predict(self._X_test)
+        y_pred = np.squeeze(np.where(raw_pred >= eval_thresh, 1, 0), axis=-1)
 
         # get prediction scores and prediction
         accuracy = scores[1]
-        auc = roc_auc_score(self._y_test, raw_preds)
+        auc = roc_auc_score(self._y_test, raw_pred)
+        mae = mean_absolute_error(self._y_test, y_pred)
 
         # print accuracy and AUC score
         print('\nAccuracy Measures')
         print('=' * 20)
         print("Accuracy:  {:.2f}%".format(100 * accuracy))
+        print("MAPE:      {:.2f}%".format(100 * mae))
         print("AUC Score: {:.2f}%".format(100 * auc))
 
         # print confusion matrix
