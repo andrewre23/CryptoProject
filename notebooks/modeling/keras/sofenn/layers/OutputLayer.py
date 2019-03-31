@@ -25,11 +25,12 @@ class OutputLayer(Layer):
     Output Layer (5) of SOFNN
     ==========================
 
-    - Sum of each output of previous layer (f)
+    - Unweighted sum of each output of previous layer (f)
 
     - output for fuzzy layer is:
         sum[k=1, u; f(k)]
                 for u neurons
+        - shape: (samples,)
     """
 
     def __init__(self,
