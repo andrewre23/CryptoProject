@@ -17,16 +17,16 @@
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from keras import backend as K
 from keras.models import Model
-from keras.layers import Input, Dense, Activation
+from keras.layers import Input, Activation
 
 from sklearn.metrics import confusion_matrix, classification_report
 
 # custom Fuzzy Layers
-from .layers import \
-    FuzzyLayer, NormalizedLayer, WeightedLayer, OutputLayer
+from .layers import FuzzyLayer, NormalizedLayer, WeightedLayer, OutputLayer
 
 
 class SOFNN(object):
@@ -54,41 +54,10 @@ class SOFNN(object):
     - neurons : number of initial neurons
     - debug : debug flag
 
-    Layers
-    ======
-    1 - Input Layer
-            input dataset
-        - input shape  : (*, features)
-    2 - Radial Basis Function Layer (Fuzzy Layer)
-            layer to hold fuzzy rules for complex system
-        - input : x
-            shape: (*, features * neurons)
-        - output : phi
-            shape : (*, neurons)
-    3 - Normalized Layer
-            normalize each output of previous layer as
-            relative amount from sum of all previous outputs
-        - input : phi
-            shape  : (*, neurons)
-        - output : psi
-            shape : (*, neurons)
-    4 - Weighted Layer
-            multiply bias vector (1+n_features, neurons) by
-            parameter vector (1+n_features,) of parameters
-            from each fuzzy rule
-            multiply each product by output of each rule's
-            layer from normalized layer
-        - inputs : [x, psi]
-            shape  : [(*, 1+features), (*, neurons)]
-        - output : f
-            shape : (*, neurons)
-    5 - Output Layer
-            summation of incoming signals from weighted layer
-        - input shape  : (*, neurons)
-        - output shape : (*,)
-
     Methods
     =======
+    - build_model :
+        - build and compile model
     - self_organize :
         - run main logic to organize FNN
     - add_neuron :
@@ -100,8 +69,6 @@ class SOFNN(object):
 
     Secondary Methods
     =================
-    - build_model :
-        - build and compile model
     - train_model :
         - train on data
     - evaluate_model :
@@ -124,7 +91,7 @@ class SOFNN(object):
 
     def __init__(self, X_train, X_test, y_train, y_test, neurons=1, debug=True):
         # set debug flag
-        self.debug = debug
+        self.__debug = debug
 
         # set data attributes
         self._X_train = X_train
@@ -132,10 +99,78 @@ class SOFNN(object):
         self._y_train = y_train
         self._y_test = y_test
         # set initial number of neurons
-        self._neurons = neurons
+        self.__neurons = neurons
 
         # build model on init
-        self._build_model()
+        self.build_model()
+
+    def build_model(self):
+        """
+        Create and compile model
+        - sets compiled model as self.model
+
+        Layers
+        ======
+        1 - Input Layer
+                input dataset
+            - input shape  : (*, features)
+        2 - Radial Basis Function Layer (Fuzzy Layer)
+                layer to hold fuzzy rules for complex system
+            - input : x
+                shape: (*, features * neurons)
+            - output : phi
+                shape : (*, neurons)
+        3 - Normalized Layer
+                normalize each output of previous layer as
+                relative amount from sum of all previous outputs
+            - input : phi
+                shape  : (*, neurons)
+            - output : psi
+                shape : (*, neurons)
+        4 - Weighted Layer
+                multiply bias vector (1+n_features, neurons) by
+                parameter vector (1+n_features,) of parameters
+                from each fuzzy rule
+                multiply each product by output of each rule's
+                layer from normalized layer
+            - inputs : [x, psi]
+                shape  : [(*, 1+features), (*, neurons)]
+            - output : f
+                shape : (*, neurons)
+        5 - Output Layer
+                summation of incoming signals from weighted layer
+            - input shape  : (*, neurons)
+            - output shape : (*,)
+        """
+
+        if self.__debug:
+            print('\nBUILDING SOFNN WITH {} NEURONS'.format(self.__neurons))
+
+        # get shape of training data
+        samples, feats = self._X_train.shape
+
+        # add layers
+        inputs = Input(name='Inputs', shape=(feats,))
+        fuzz = FuzzyLayer(self.__neurons)
+        norm = NormalizedLayer(self.__neurons)
+        weights = WeightedLayer(self.__neurons)
+        raw = OutputLayer()
+
+        # run through layers
+        phi = fuzz(inputs)
+        psi = norm(phi)
+        f = weights([inputs, psi])
+        raw_output = raw(f)
+        # raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
+        preds = Activation(name='OutputActivation', activation='sigmoid')(raw_output)
+
+        # compile model and output summary
+        model = Model(inputs=inputs, outputs=preds)
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', 'mape'])
+        if self.__debug:
+            print(model.summary())
+
+        self.model = model
 
     def self_organize(self, epochs=50, batch_size=None, eval_thresh=0.5,
                       ifpart_thresh=0.1354, delta=0.12,
@@ -166,6 +201,8 @@ class SOFNN(object):
             - max iterations for widening centers
         """
         # initial training of model - yields predictions
+        if self.__debug:
+            print('\nBeginning model training...')
         self._train_model(epochs=epochs, batch_size=batch_size)
         y_pred = self._evaluate_model(eval_thresh=eval_thresh)
 
@@ -175,9 +212,14 @@ class SOFNN(object):
             # run criterion checks and organize accordingly
             self.organize(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
                           ksig=ksig, max_widens=max_widens, delta=delta)
-        if self.debug:
-            print('Self-Organization complete!')
+            if self.__debug:
+                self._evaluate_model(eval_thresh=eval_thresh)
+
+        if self.__debug:
+            print('\nSelf-Organization complete!')
             print('If-Part and Error Criterion satisfied')
+            print('Final Evaluation')
+            self._evaluate_model(eval_thresh=eval_thresh)
 
     def organize(self, y_pred, ifpart_thresh=0.1354,
                  ksig=1.12, max_widens=250, delta=0.12):
@@ -215,14 +257,32 @@ class SOFNN(object):
         """
         Rebuild model but with extra neuron
         """
-        if self.debug:
-            print('Adding neuron...')
+        if self.__debug:
+            print('\nAdding neuron...')
 
         # get current weights
+        c_curr, s_curr = self._get_layer_weights('FuzzyRules')
 
+        # get weights for new neuron
+        ck, sk = self._new_neuron_weights()
+        # expand dim for stacking
+        ck = np.expand_dims(ck, axis=-1)
+        sk = np.expand_dims(sk, axis=-1)
+        c_new = np.hstack((c_curr, ck))
+        s_new = np.hstack((s_curr, sk))
 
-        # increase neurons
-        self._neurons += 1
+        # increase neurons and rebuild model
+        self.__neurons += 1
+        self.build_model()
+
+        # update weights
+        new_weights = [c_new, s_new]
+        self._get_layer('FuzzyRules').set_weights(new_weights)
+
+        # validate weights updated as expected
+        final_weights = self._get_layer_weights('FuzzyRules')
+        assert np.allclose(final_weights[0], final_weights[0])
+        assert np.allclose(final_weights[1], final_weights[1])
 
     def widen_centers(self, ksig=1.12, max_widens=250):
         """
@@ -236,8 +296,8 @@ class SOFNN(object):
             - number of max iterations to update centers before ending
         """
         # print alert of successful widening
-        if self.debug:
-            print('Widening centers...')
+        if self.__debug:
+            print('\nWidening centers...')
 
         # get fuzzy layer and output to find max neuron output
         fuzz = self._get_layer('FuzzyRules')
@@ -253,11 +313,11 @@ class SOFNN(object):
             counter += 1
             # check if max iterations exceeded
             if counter > max_widens:
-                if self.debug:
+                if self.__debug:
                     print('Max iterations reached ({})'
                           .format(counter - 1))
                 return False
-            if self.debug and counter % 20 == 0:
+            if self.__debug and counter % 20 == 0:
                 print('Iteration {}'.format(counter))
 
             # get neuron with max-output for each sample
@@ -276,7 +336,7 @@ class SOFNN(object):
             fuzz.set_weights(new_weights)
 
         # print alert of successful widening
-        if self.debug:
+        if self.__debug:
             print('Centers widened after {} iterations'.format(counter))
 
     def error_criterion(self, y_pred, delta=0.12):
@@ -313,42 +373,6 @@ class SOFNN(object):
         # return True if at least half of samples agree
         return (maxes.sum() / len(maxes)) >= 0.5
 
-    def _build_model(self):
-        """
-        Create and compile model
-
-        - sets compiled model as self._model
-        """
-
-        if self.debug:
-            print('Building SOFNN with {} neurons'.format(self._neurons))
-
-        # get shape of training data
-        samples, feats = self._X_train.shape
-
-        # add layers
-        inputs = Input(name='Inputs', shape=(feats,))
-        fuzz = FuzzyLayer(self._neurons)
-        norm = NormalizedLayer(self._neurons)
-        weights = WeightedLayer(self._neurons)
-        raw = OutputLayer()
-
-        # run through layers
-        phi = fuzz(inputs)
-        psi = norm(phi)
-        f = weights([inputs, psi])
-        raw_output = raw(f)
-        # raw_output = Dense(1, name='RawOutput', activation='linear', use_bias=False)(f)
-        preds = Activation(name='OutputActivation', activation='sigmoid')(raw_output)
-
-        # compile model and output summary
-        model = Model(inputs=inputs, outputs=preds)
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', 'mape'])
-        if self.debug:
-            print(model.summary())
-
-        self.model = model
-
     def _train_model(self, epochs=50, batch_size=None):
         """
         Run currently saved model
@@ -361,7 +385,7 @@ class SOFNN(object):
             - size of training batch
         """
         # fit model and evaluate
-        self.model.fit(self._X_train, self._y_train,
+        self.model.fit(self._X_train, self._y_train, verbose=0,
                        epochs=epochs, batch_size=batch_size, shuffle=False)
 
     def _evaluate_model(self, eval_thresh=0.5):
@@ -396,6 +420,7 @@ class SOFNN(object):
         print('=' * 20)
         print(classification_report(self._y_test, y_pred, labels=[0, 1]))
 
+        self._plot_results(y_pred=y_pred)
         # return predicted values
         return y_pred
 
@@ -465,8 +490,8 @@ class SOFNN(object):
         c = self._get_layer_weights('FuzzyRules')[0]
 
         # align x and c and assert matching dims
-        aligned_x = x.repeat(self._neurons). \
-            reshape(x.shape + (self._neurons,))
+        aligned_x = x.repeat(self.__neurons). \
+            reshape(x.shape + (self.__neurons,))
         aligned_c = c.repeat(samples).reshape((samples,) + c.shape)
         assert aligned_x.shape == aligned_c.shape
 
@@ -515,6 +540,40 @@ class SOFNN(object):
         ck = np.where(dist_vec <= kd_i, c_min, x.mean(axis=0))
         sk = np.where(dist_vec <= kd_i, s_min, dist_vec)
         return ck, sk
+
+    def _plot_results(self, y_pred):
+        """
+        Plot predictions against time series
+
+        Parameters
+        ==========
+        y_pred : np.array
+            - predicted values
+        """
+        # plotting results
+        df_plot = pd.DataFrame()
+
+        # create pred/true time series
+        df_plot['price'] = self._X_test['bitcoin_close']
+        df_plot['pred'] = y_pred * df_plot['price']
+        df_plot['true'] = self._y_test * df_plot['price']
+        df_plot['hits'] = df_plot['price'] * (df_plot['pred'] == df_plot['true'])
+        df_plot['miss'] = df_plot['price'] * (df_plot['pred'] != df_plot['true'])
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        plt.plot(df_plot['price'], color='b')
+        plt.bar(df_plot['price'].index, df_plot['hits'], color='g')
+        plt.bar(df_plot['price'].index, df_plot['miss'], color='r')
+        for label in ax.xaxis.get_ticklabels()[::400]:
+            label.set_visible(False)
+
+        plt.title('BTC Close Price Against Predictions')
+        plt.xlabel('Dates')
+        plt.ylabel('BTC Price ($)')
+        plt.grid(True)
+        plt.xticks(df_plot['price'].index[::4],
+                   df_plot['price'].index[::4], rotation=70)
+        plt.show()
 
     @staticmethod
     def _loss_function(y_true, y_pred):
