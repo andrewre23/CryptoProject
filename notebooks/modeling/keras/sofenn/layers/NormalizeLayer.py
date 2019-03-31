@@ -15,7 +15,6 @@
 # github.com/andrewre23
 #
 
-
 from keras import backend as K
 from keras.engine.topology import Layer
 
