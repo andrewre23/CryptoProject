@@ -23,7 +23,7 @@ from keras import backend as K
 from keras.models import Model
 from keras.layers import Input, Activation
 
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
 
 # custom Fuzzy Layers
 from .layers import FuzzyLayer, NormalizedLayer, WeightedLayer, OutputLayer
@@ -168,7 +168,7 @@ class SOFNN(object):
 
         # compile model and output summary
         model = Model(inputs=inputs, outputs=preds)
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', 'mape'])
+        model.compile(loss=self._loss_function, optimizer='adam', metrics=['accuracy', 'mape'])
         if self.__debug:
             print(model.summary())
 
@@ -288,6 +288,15 @@ class SOFNN(object):
         final_weights = self._get_layer_weights('FuzzyRules')
         assert np.allclose(new_weights[0], final_weights[0])
         assert np.allclose(new_weights[1], final_weights[1])
+
+    def prune_neurons(self, tol_lim=0.8):
+        """
+        Prune any unimportant neurons per effect on RMSE
+        """
+        if self.__debug:
+            print('\nPruning neurons...')
+        # calculate RMSE
+        # rmse =
 
     def widen_centers(self, ksig=1.12, max_widens=250):
         """
@@ -427,15 +436,24 @@ class SOFNN(object):
             - predicted values
             - shape: (samples,)
         """
+        # calculate accuracy scores
         scores = self.model.evaluate(self._X_test, self._y_test, verbose=1)
-        accuracy = scores[1] * 100
-        print("\nAccuracy: {:.2f}%".format(accuracy))
+        raw_preds = self.model.predict(self._X_test)
+        y_pred = np.squeeze(np.where(raw_preds >= eval_thresh, 1, 0), axis=-1)
+
+        # get prediction scores and prediction
+        accuracy = scores[1]
+        auc = roc_auc_score(self._y_test, raw_preds)
+
+        # print accuracy and AUC score
+        print('\nAccuracy Measures')
+        print('=' * 20)
+        print("Accuracy:  {:.2f}%".format(100 * accuracy))
+        print("AUC Score: {:.2f}%".format(100 * auc))
 
         # print confusion matrix
         print('\nConfusion Matrix')
         print('=' * 20)
-        y_pred = np.squeeze(np.where(
-            self.model.predict(self._X_test) >= eval_thresh, 1, 0), axis=-1)
         print(pd.DataFrame(confusion_matrix(self._y_test, y_pred),
                            index=['true:no', 'true:yes'], columns=['pred:no', 'pred:yes']))
 
