@@ -59,6 +59,10 @@ class SOFNN(object):
         - number of initial neurons
     - s_init : int
         - initial sigma for first neuron
+    - epochs : int
+        - training epochs
+    - batch_size : int
+        - training batch size
     - eval_thresh : float
         - cutoff for 0/1 class
     - ifpart_thresh : float
@@ -119,6 +123,7 @@ class SOFNN(object):
 
     def __init__(self, X_train, X_test, y_train, y_test,     # data attributes
                  neurons=1, s_init=4, max_neurons=100,       # initialization parameters
+                 epochs=250, batch_size=None,                  # training data
                  eval_thresh=0.5, ifpart_thresh=0.1354,      # evaluation and ifpart threshold
                  ksig=1.12, max_widens=250, err_delta=0.12,  # adding neuron or widening centers
                  prune_tol=0.85, k_mae=0.1,                  # pruning parameters
@@ -137,6 +142,8 @@ class SOFNN(object):
 
         # set remaining attributes
         self._max_neurons = max_neurons
+        self._epochs = epochs
+        self._batch_size = batch_size
         self._eval_thresh = eval_thresh
         self._ifpart_thresh = ifpart_thresh
         self._ksig = ksig
@@ -217,7 +224,7 @@ class SOFNN(object):
 
         return model
 
-    def self_organize(self, epochs=50, batch_size=None):
+    def self_organize(self):
         """
         Main run function to handle organization logic
 
@@ -236,7 +243,7 @@ class SOFNN(object):
         # initial training of model - yields predictions
         if self.__debug:
             print('Beginning model training...')
-        self._train_model(epochs=epochs, batch_size=batch_size)
+        self._train_model()
         if self.__debug:
             print('Initial Model Evaluation')
         y_pred = self._evaluate_model(eval_thresh=self._eval_thresh)
@@ -289,7 +296,9 @@ class SOFNN(object):
             # reset fuzzy weights if previously widened before adding
             if not np.array_equal(start_weights, self._get_layer_weights('FuzzyRules')):
                 self._get_layer('FuzzyRules').set_weights(start_weights)
+            # add neuron and retrain model
             self.add_neuron()
+            self._train_model()
 
         # updated prediction and prune neurons
         y_pred_new = self._model_predictions()
@@ -326,6 +335,9 @@ class SOFNN(object):
         final_weights = self._get_layer_weights('FuzzyRules')
         assert np.allclose(new_weights[0], final_weights[0])
         assert np.allclose(new_weights[1], final_weights[1])
+
+        # retrain model since new neuron added
+        self._train_model()
 
     def prune_neurons(self, y_pred):
         """
@@ -527,7 +539,7 @@ class SOFNN(object):
         assert np.allclose(start_weights[0], final_weights[0])
         assert np.allclose(start_weights[1], final_weights[1])
 
-    def _train_model(self, epochs=50, batch_size=None):
+    def _train_model(self):
         """
         Run currently saved model
 
@@ -540,7 +552,7 @@ class SOFNN(object):
         """
         # fit model and evaluate
         self.model.fit(self._X_train, self._y_train, verbose=0,
-                       epochs=epochs, batch_size=batch_size, shuffle=False)
+                       epochs=self._epochs, batch_size=self._batch_size, shuffle=False)
 
     def _model_predictions(self):
         """
