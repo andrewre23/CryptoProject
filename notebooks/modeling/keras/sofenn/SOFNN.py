@@ -117,11 +117,11 @@ class SOFNN(object):
         - custom loss function per Leng, Prasad, McGinnity (2004)
     """
 
-    def __init__(self, X_train, X_test, y_train, y_test,   # data attributes
-                 neurons=1, s_init=4,                      # initialization parameters
-                 eval_thresh=0.5, ifpart_thresh=0.1354,    # evaluation and ifpart threshold
-                 ksig=1.12, max_widens=250, delta=0.12,    # adding neuron or widening centers
-                 prune_tol=0.85, k_mae=0.1,                # pruning parameters
+    def __init__(self, X_train, X_test, y_train, y_test,     # data attributes
+                 neurons=1, s_init=4, max_neurons=100,       # initialization parameters
+                 eval_thresh=0.5, ifpart_thresh=0.1354,      # evaluation and ifpart threshold
+                 ksig=1.12, max_widens=250, err_delta=0.12,  # adding neuron or widening centers
+                 prune_tol=0.85, k_mae=0.1,                  # pruning parameters
                  debug=True):
         # set debug flag
         self.__debug = debug
@@ -136,11 +136,12 @@ class SOFNN(object):
         self.__neurons = neurons
 
         # set remaining attributes
+        self._max_neurons = max_neurons
         self._eval_thresh = eval_thresh
         self._ifpart_thresh = ifpart_thresh
         self._ksig = ksig
         self._max_widens = max_widens
-        self._delta = delta
+        self._delta = err_delta
         self._prune_tol = prune_tol
         self._k_mae = k_mae
 
@@ -245,8 +246,19 @@ class SOFNN(object):
                 not self.if_part_criterion():
             # run criterion checks and organize accordingly
             self.organize(y_pred=y_pred)
+
+            # quit if above max neurons allowed
+            if self.__neurons >= self._max_neurons:
+                if self.__debug:
+                    print('\nMaximum neurons reached')
+                    print('Terminating self-organizing process')
+                    print('\nFinal Evaluation')
+                    self._evaluate_model(eval_thresh=self._eval_thresh)
+
+            # update predictions
             y_pred = self._evaluate_model(eval_thresh=self._eval_thresh)
 
+        # print terminal message if successfully organized
         if self.__debug:
             print('\nSelf-Organization complete!')
             print('If-Part and Error Criterion satisfied')
@@ -335,7 +347,6 @@ class SOFNN(object):
 
         # calculate mean-absolute-error
         E_rmae = mean_absolute_error(self._y_test.values, y_pred)
-        print('Start MAE - {}'.format(E_rmae))
 
         # create duplicate model and get both sets of model weights
         prune_model = self.build_model(False)
