@@ -81,6 +81,11 @@ class SOFNN(object):
         - build and compile model
     - self_organize :
         - run main logic to organize FNN
+    - error_criterion :
+        - considers generalized performance of overall network
+        - add neuron if error above predefined error threshold (delta)
+    - if_part_criterion :
+        - checks if current fuzzy rules cover/cluster input vector suitably
     - add_neuron :
         - add one neuron to model
     - prune_neuron :
@@ -90,24 +95,26 @@ class SOFNN(object):
 
     Secondary Methods
     =================
+    - initialize_model :
+        - initialize neuron weights if only 1 neuron
     - train_model :
         - train on data
+    - model_predictions :
+        - yield model predictions without full evaluation
     - evaluate_model :
-        - evaluate model on test data
+        - full evaluation of model on test data
     - get_layer :
         - return layer object from model by name
     - get_layer_weights :
         - get current weights from any layer in model
     - get_layer_output :
         - get test output from any layer in model
+    - min_dist_vector :
+        - get min_dist_vector used when adding neurons
+    - new_neuron_weights :
+        - get weights for new neuron to be added
     - loss_function :
         - custom loss function per Leng, Prasad, McGinnity (2004)
-    - error_criterion :
-        - considers generalized performance of overall network
-        - add neuron if error above predefined error threshold (delta)
-    - if_part_criterion :
-        - checks if current fuzzy rules cover/cluster input vector suitably
-
     """
 
     def __init__(self, X_train, X_test, y_train, y_test,   # data attributes
