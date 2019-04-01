@@ -232,13 +232,6 @@ class SOFNN(object):
         - If fails If-Part test, widen rule widths
         - If still fails, reset to original widths
             then add neuron and retrain weights
-
-        Parameters
-        ==========
-        epochs : int
-            - number of training epochs
-        batch_size : int
-            - size of training batch
         """
         # initial training of model - yields predictions
         if self.__debug:
@@ -542,13 +535,6 @@ class SOFNN(object):
     def _train_model(self):
         """
         Run currently saved model
-
-        Parameters
-        ==========
-        epochs : int
-            - number of training epochs
-        batch_size : int
-            - size of training batch
         """
         # fit model and evaluate
         self.model.fit(self._X_train, self._y_train, verbose=0,
