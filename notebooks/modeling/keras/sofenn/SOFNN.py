@@ -326,8 +326,8 @@ class SOFNN(object):
 
         # validate weights updated as expected
         final_weights = self._get_layer_weights('FuzzyRules')
-        assert np.allclose(new_weights[0], final_weights[0])
-        assert np.allclose(new_weights[1], final_weights[1])
+        assert np.allclose(c_new, final_weights[0], 1e-5)
+        assert np.allclose(s_new, final_weights[1], 1e-5)
 
         # retrain model since new neuron added
         self._train_model()
@@ -496,7 +496,7 @@ class SOFNN(object):
             - predictions
         """
         # mean of absolute test difference
-        return np.abs(y_pred - self._y_test).mean() <= self._delta
+        return mean_absolute_error(self._y_test, y_pred) <= self._delta
 
     def if_part_criterion(self):
         """
@@ -520,7 +520,9 @@ class SOFNN(object):
 
         """
         # derive initial c and s
-        c_init = self._X_train.values.mean(axis=0, keepdims=True).T
+        # set initial center as first training value
+        x_i = self._X_train.values[0]
+        c_init = np.expand_dims(x_i, axis=-1)
         s_init = np.repeat(s_init, c_init.size).reshape(c_init.shape)
         start_weights = [c_init, s_init]
         self._get_layer('FuzzyRules').set_weights(start_weights)
@@ -536,7 +538,7 @@ class SOFNN(object):
         """
         # fit model and evaluate
         self.model.fit(self._X_train, self._y_train, verbose=0,
-                       epochs=self._epochs, batch_size=self._batch_size, shuffle=False)
+                       epochs=self._epochs, batch_size=self._batch_size)
 
     def _model_predictions(self):
         """
