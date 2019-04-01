@@ -52,7 +52,27 @@ class SOFNN(object):
         - shape: (train_*,)
     - y_test  : testing output data
         - shape: (test_*,)
-    - neurons : number of initial neurons
+
+    Attributes
+    ==========
+    - neurons : int
+        - number of initial neurons
+    - s_init : int
+        - initial sigma for first neuron
+    - eval_thresh : float
+        - cutoff for 0/1 class
+    - ifpart_thresh : float
+        - threshold for if-part
+    - ksig : float
+        - factor to widen centers
+    - max_widens : int
+        - max iterations for widening centers
+    - delta : float
+        - threshold for error criterion whether new neuron to be added
+    - eval_thresh : float
+        - cutoff threshold for positive/negative classes
+    - prune_tol : float
+        - tolerance limit for RMSE (0 < lambda < 1)
     - debug : debug flag
 
     Methods
@@ -90,7 +110,12 @@ class SOFNN(object):
 
     """
 
-    def __init__(self, X_train, X_test, y_train, y_test, neurons=1, s_init=4, debug=True):
+    def __init__(self, X_train, X_test, y_train, y_test,   # data attributes
+                 neurons=1, s_init=4,                      # initialization parameters
+                 eval_thresh=0.5, ifpart_thresh=0.1354,    # evaluation and ifpart threshold
+                 ksig=1.12, max_widens=250, delta=0.12,    # adding neuron or widening centers
+                 prune_tol=0.85, k_mae=0.1,                # pruning parameters
+                 debug=True):
         # set debug flag
         self.__debug = debug
 
@@ -102,6 +127,16 @@ class SOFNN(object):
 
         # set initial number of neurons
         self.__neurons = neurons
+
+        # set remaining attributes
+        self._eval_thresh = eval_thresh
+        self._ifpart_thresh = ifpart_thresh
+        self._ksig = ksig
+        self._max_widens = max_widens
+        self._delta = delta
+        self._prune_tol = prune_tol
+        self._k_mae = k_mae
+
         # build model and initialize if needed
         self.model = self.build_model()
         if self.__neurons == 1:
@@ -174,9 +209,7 @@ class SOFNN(object):
 
         return model
 
-    def self_organize(self, epochs=50, batch_size=None, eval_thresh=0.5,
-                      ifpart_thresh=0.1354, ksig=1.12, max_widens=250, delta=0.12,
-                      prune_tol=0.8):
+    def self_organize(self, epochs=50, batch_size=None):
         """
         Main run function to handle organization logic
 
@@ -191,20 +224,6 @@ class SOFNN(object):
             - number of training epochs
         batch_size : int
             - size of training batch
-        eval_thresh : float
-            - cutoff for 0/1 class
-        ifpart_thresh : float
-            - threshold for if-part
-        ksig : float
-            - factor to widen centers
-        max_widens : int
-            - max iterations for widening centers
-        delta : float
-            - threshold for error criterion whether new neuron to be added
-        eval_thresh : float
-            - cutoff threshold for positive/negative classes
-        prune_tol : float
-            - tolerance limit for RMSE (0 < lambda < 1)
         """
         # initial training of model - yields predictions
         if self.__debug:
@@ -212,26 +231,22 @@ class SOFNN(object):
         self._train_model(epochs=epochs, batch_size=batch_size)
         if self.__debug:
             print('Initial Model Evaluation')
-        y_pred = self._evaluate_model(eval_thresh=eval_thresh)
+        y_pred = self._evaluate_model(eval_thresh=self._eval_thresh)
 
         # run update logic until passes criterion checks
-        while not self.error_criterion(y_pred, delta=delta) and \
-                not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
+        while not self.error_criterion(y_pred) and \
+                not self.if_part_criterion():
             # run criterion checks and organize accordingly
-            self.organize(y_pred=y_pred, ifpart_thresh=ifpart_thresh,
-                          ksig=ksig, max_widens=max_widens, delta=delta,
-                          eval_thresh=eval_thresh, prune_tol=prune_tol)
-            y_pred = self._model_predictions(eval_thresh=eval_thresh)
+            self.organize(y_pred=y_pred)
+            y_pred = self._evaluate_model(eval_thresh=self._eval_thresh)
 
         if self.__debug:
             print('\nSelf-Organization complete!')
             print('If-Part and Error Criterion satisfied')
             print('Final Evaluation')
-            self._evaluate_model(eval_thresh=eval_thresh)
+            self._evaluate_model(eval_thresh=self._eval_thresh)
 
-    def organize(self, y_pred, ifpart_thresh=0.1354,
-                 ksig=1.12, max_widens=250, delta=0.12,
-                 eval_thresh=0.5, prune_tol=0.8, k_mae=0.1):
+    def organize(self, y_pred):
         """
         Run one iteration of organizational logic
         - check on system error and if-part criteron
@@ -241,38 +256,25 @@ class SOFNN(object):
         ==========
         y_pred : np.array
             - predictions
-        ifpart_thresh : float
-            - threshold for if-part
-        ksig : float
-            - factor to widen centers
-        max_widens : int
-            - max iterations for widening centers
-        delta : float
-            - threshold for error criterion whether new neuron to be added
-        eval_thresh : float
-            - cutoff threshold for positive/negative classes
-        prune_tol : float
-            - tolerance limit for RMSE (0 < lambda < 1)
         """
 
         # get copy of initial fuzzy weights
         start_weights = self._get_layer_weights('FuzzyRules')
 
         # widen centers if necessary
-        if not self.if_part_criterion(ifpart_thresh=ifpart_thresh):
-            self.widen_centers(ksig=ksig, max_widens=max_widens)
+        if not self.if_part_criterion():
+            self.widen_centers()
 
         # add neuron if necessary
-        if not self.error_criterion(y_pred=y_pred, delta=delta):
+        if not self.error_criterion(y_pred=y_pred):
             # reset fuzzy weights if previously widened before adding
             if not np.array_equal(start_weights, self._get_layer_weights('FuzzyRules')):
                 self._get_layer('FuzzyRules').set_weights(start_weights)
             self.add_neuron()
 
         # updated prediction and prune neurons
-        y_pred_new = self._model_predictions(eval_thresh=eval_thresh)
-        self.prune_neurons(y_pred=y_pred_new, eval_thresh=eval_thresh,
-                           prune_tol=prune_tol, k_mae=k_mae)
+        y_pred_new = self._model_predictions()
+        self.prune_neurons(y_pred=y_pred_new)
 
     def add_neuron(self):
         """
@@ -306,7 +308,7 @@ class SOFNN(object):
         assert np.allclose(new_weights[0], final_weights[0])
         assert np.allclose(new_weights[1], final_weights[1])
 
-    def prune_neurons(self, y_pred, eval_thresh=0.5, prune_tol=0.8, k_mae=0.1):
+    def prune_neurons(self, y_pred):
         """
         Prune any unimportant neurons per effect on RMSE
 
@@ -314,10 +316,6 @@ class SOFNN(object):
         ==========
         y_pred : np.array
             - predicted values
-        eval_thresh : float
-            - cutoff threshold for positive/negative classes
-        prune_tol : float
-            - tolerance limit for RMSE (0 < lambda < 1)
         """
         if self.__debug:
             print('\nPruning neurons...')
@@ -351,7 +349,7 @@ class SOFNN(object):
 
             # predict values with new zeroed out weights
             neur_pred = prune_model.predict(self._X_test)
-            y_pred_neur = np.squeeze(np.where(neur_pred >= eval_thresh, 1, 0), axis=-1)
+            y_pred_neur = np.squeeze(np.where(neur_pred >= self._eval_thresh, 1, 0), axis=-1)
             neur_rmae = mean_absolute_error(self._y_test.values, y_pred_neur)
 
             # append difference in rmse and new prediction rmse
@@ -360,7 +358,7 @@ class SOFNN(object):
         # convert delta_E to numpy array
         delta_E = np.array(delta_E)
         # choose max of tolerance or threshold limit
-        E = max(prune_tol * E_rmae, k_mae)
+        E = max(self._prune_tol * E_rmae, self._k_mae)
 
         # iterate over each neuron in ascending importance
         # and prune until hit "important" neuron
@@ -381,7 +379,7 @@ class SOFNN(object):
 
             # predict values with new zeroed out weights
             neur_pred = prune_model.predict(self._X_test)
-            y_pred_neur = np.squeeze(np.where(neur_pred >= eval_thresh, 1, 0), axis=-1)
+            y_pred_neur = np.squeeze(np.where(neur_pred >= self._eval_thresh, 1, 0), axis=-1)
             E_rmae_del = mean_absolute_error(self._y_test.values, y_pred_neur)
 
             # if E_mae_del < E
@@ -417,16 +415,9 @@ class SOFNN(object):
         self.model = self.build_model(False)
         self.model.set_weights([c, s, a])
 
-    def widen_centers(self, ksig=1.12, max_widens=250):
+    def widen_centers(self):
         """
         Widen center of neurons to better cover data
-
-        Parameters
-        ==========
-        ksig : float
-            - multiplicative factor widening centers
-        max_widens : int
-            - number of max iterations to update centers before ending
         """
         # print alert of successful widening
         if self.__debug:
@@ -445,7 +436,7 @@ class SOFNN(object):
 
             counter += 1
             # check if max iterations exceeded
-            if counter > max_widens:
+            if counter > self._max_widens:
                 if self.__debug:
                     print('Max iterations reached ({})'
                           .format(counter - 1))
@@ -462,7 +453,7 @@ class SOFNN(object):
             # select minimum width to expand
             # and multiply by factor
             mf_min = s[:, max_neuron].argmin()
-            s[mf_min, max_neuron] = ksig * s[mf_min, max_neuron]
+            s[mf_min, max_neuron] = self._ksig * s[mf_min, max_neuron]
 
             # update weights
             new_weights = [c, s]
@@ -472,7 +463,7 @@ class SOFNN(object):
         if self.__debug:
             print('Centers widened after {} iterations'.format(counter))
 
-    def error_criterion(self, y_pred, delta=0.12):
+    def error_criterion(self, y_pred):
         """
         Check error criterion for neuron-adding process
             - return True if no need to grow neuron
@@ -482,27 +473,20 @@ class SOFNN(object):
         ==========
         y_pred : np.array
             - predictions
-        delta : float
-            - threshold for error criterion whether new neuron to be added
         """
         # mean of absolute test difference
-        return np.abs(y_pred - self._y_test).mean() <= delta
+        return np.abs(y_pred - self._y_test).mean() <= self._delta
 
-    def if_part_criterion(self, ifpart_thresh=0.1354):
+    def if_part_criterion(self):
         """
         Check if-part criterion for neuron adding process
             - for each sample, get max of all neuron outputs (pre-normalization)
             - test whether max val at or above threshold
-
-        Parameters
-        ==========
-        ifpart_thresh : float
-            - threshold for if-part detections
         """
         # get max val
         fuzz_out = self._get_layer_output('FuzzyRules')
         # check if max neuron output is above threshold
-        maxes = np.max(fuzz_out, axis=-1) >= ifpart_thresh
+        maxes = np.max(fuzz_out, axis=-1) >= self._ifpart_thresh
         # return True if at least half of samples agree
         return (maxes.sum() / len(maxes)) >= 0.5
 
@@ -540,14 +524,10 @@ class SOFNN(object):
         self.model.fit(self._X_train, self._y_train, verbose=0,
                        epochs=epochs, batch_size=batch_size, shuffle=False)
 
-    def _model_predictions(self, eval_thresh=0.5):
+    def _model_predictions(self):
         """
         Evaluate currently trained model
 
-        Parameters
-        ==========
-        eval_thresh : float
-            - cutoff threshold for positive/negative classes
 
         Returns
         =======
@@ -557,7 +537,7 @@ class SOFNN(object):
         """
         # get prediction values
         raw_pred = self.model.predict(self._X_test)
-        y_pred = np.squeeze(np.where(raw_pred >= eval_thresh, 1, 0), axis=-1)
+        y_pred = np.squeeze(np.where(raw_pred >= self._eval_thresh, 1, 0), axis=-1)
         return y_pred
 
     def _evaluate_model(self, eval_thresh=0.5):
