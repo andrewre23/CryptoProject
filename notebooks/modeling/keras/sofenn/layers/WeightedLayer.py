@@ -72,7 +72,7 @@ class WeightedLayer(Layer):
         a : then-part (consequence) of fuzzy rule
             - a(i,j)
             - trainable weight of ith feature of jth neuron
-            - shape: (samples, 1+features, neurons)
+            - shape: (1+features, neurons)
         """
         # assert multi-input as list
         assert isinstance(input_shape, list)
