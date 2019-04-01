@@ -464,8 +464,6 @@ class SOFNN(object):
                     print('Max iterations reached ({})'
                           .format(counter - 1))
                 return False
-            if self.__debug and counter % 20 == 0:
-                print('Iteration {}'.format(counter))
 
             # get neuron with max-output for each sample
             # then select the most common one to update
