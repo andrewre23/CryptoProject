@@ -324,6 +324,11 @@ class SOFNN(object):
         new_weights = [c_new, s_new]
         self._get_layer('FuzzyRules').set_weights(new_weights)
 
+        # validate weights updated as expected
+        final_weights = self._get_layer_weights('FuzzyRules')
+        assert np.allclose(c_new, final_weights[0], 1e-3)
+        assert np.allclose(s_new, final_weights[1], 1e-3)
+
         # retrain model since new neuron added
         self._train_model()
 
