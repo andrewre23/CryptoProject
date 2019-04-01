@@ -243,7 +243,7 @@ class SOFNN(object):
         if self.__debug:
             print('\nSelf-Organization complete!')
             print('If-Part and Error Criterion satisfied')
-            print('Final Evaluation')
+            print('\nFinal Evaluation')
             self._evaluate_model(eval_thresh=self._eval_thresh)
 
     def organize(self, y_pred):
