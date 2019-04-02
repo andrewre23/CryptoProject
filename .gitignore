@@ -127,3 +127,8 @@ notebooks/modeling/keras/sofenn/layers/__pycache__/
 !/data/
 /data/submissions/
 /data/submissions/test
+/notebooks/modeling/lags/optimal_v5.csv
+/notebooks/modeling/lags/optimal_v1.csv
+/notebooks/modeling/lags/optimal_v4.csv
+/notebooks/modeling/lags/optimal_v3.csv
+/notebooks/modeling/lags/optimal_v2.csv
